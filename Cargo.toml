@@ -7,3 +7,4 @@ edition = "2018"
 bindings = { path = "bindings" }
 windows = "0.21.0"
 widestring = "0.4.3"
+sysinfo = "0.20.3"

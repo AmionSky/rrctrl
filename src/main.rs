@@ -1,43 +1,48 @@
-use bindings::Windows::Win32::Foundation::PWSTR;
-use bindings::Windows::Win32::Graphics::Gdi::{
-    EnumDisplayDevicesW, EnumDisplaySettingsW, DISPLAY_DEVICEW, ENUM_CURRENT_SETTINGS,
-};
-use bindings::Windows::Win32::UI::DisplayDevices::DEVMODEW;
-use std::{mem::size_of, ptr::null_mut};
-use widestring::{U16Str, U16String};
+mod display;
+mod error;
+mod process;
 
-fn main() {
-    println!("Hello, world!");
-    let dn = get_display_name(0).unwrap();
-    println!("Device name: {}", dn.to_string().unwrap());
-    let mut dm = DEVMODEW::default();
-    get_display_settings(&dn, &mut dm);
-    println!("Display refresh rate: {}", dm.dmDisplayFrequency);
-}
+use display::Display;
+use std::error::Error;
 
-fn get_display_name(device: u32) -> Option<U16String> {
-    let mut display = DISPLAY_DEVICEW {
-        cb: size_of::<DISPLAY_DEVICEW>() as u32,
-        ..Default::default()
-    };
+fn main() -> Result<(), Box<dyn Error>> {
+    println!("Refresh Rate Control");
 
-    if unsafe { EnumDisplayDevicesW(PWSTR(null_mut()), device, &mut display, 0).as_bool() } {
-        return Some(U16String::from_vec(display.DeviceName));
-    }
+    process::asd();
+    return Ok(());
 
-    None
-}
+    // Create
+    let mut display = Display::create(0)?;
+    println!("Device name: {}", display.name());
 
-fn get_display_settings(display_name: &U16Str, display_settings: &mut DEVMODEW) -> bool {
-    display_settings.dmSize = size_of::<DEVMODEW>() as u16;
-    display_settings.dmDriverExtra = 0;
+    // Check refresh rate
+    display.load_settings()?;
+    println!(
+        "Display refresh rate: {}",
+        display.settings().dmDisplayFrequency
+    );
 
-    unsafe {
-        EnumDisplaySettingsW(
-            PWSTR(display_name.as_ptr() as *mut u16),
-            ENUM_CURRENT_SETTINGS,
-            display_settings,
-        )
-        .as_bool()
-    }
+    // Apply new refresh rate
+    display.settings().dmDisplayFrequency = 144;
+    display.apply_settings()?;
+
+    // Check new refresh rate
+    display.load_settings()?;
+    println!(
+        "Display refresh rate: {}",
+        display.settings().dmDisplayFrequency
+    );
+
+    // Wait and reset
+    std::thread::sleep(std::time::Duration::from_secs(5));
+    display.reset_settings()?;
+
+    // Check reset refresh rate
+    display.load_settings()?;
+    println!(
+        "Display refresh rate: {}",
+        display.settings().dmDisplayFrequency
+    );
+
+    Ok(())
 }
