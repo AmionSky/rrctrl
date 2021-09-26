@@ -21,7 +21,7 @@ pub struct Display {
 impl Display {
     pub fn create(device: u32) -> Result<Self, DisplayError> {
         if let Some(name) = get_display_name(device) {
-            Ok(Display {
+            Ok(Self {
                 name,
                 settings: DEVMODEW {
                     dmSize: size_of::<DEVMODEW>() as u16,

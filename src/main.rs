@@ -8,7 +8,13 @@ use std::error::Error;
 fn main() -> Result<(), Box<dyn Error>> {
     println!("Refresh Rate Control");
 
-    process::asd();
+    let mut pc = process::ProcessChecker::new();
+    pc.checklist.push("notepad.exe".to_string());
+    loop {
+        println!("RUNNING: {}",pc.check());
+        std::thread::sleep(std::time::Duration::from_secs(1));
+    }
+    
     return Ok(());
 
     // Create
