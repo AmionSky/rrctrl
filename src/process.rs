@@ -27,10 +27,6 @@ impl ProcessChecker {
         }
     }
 
-    fn selected_pid(&self) -> usize {
-        self.selected.expect("selected PID was None")
-    }
-
     fn check_pid(&mut self, pid: usize)->bool {
         if self.system.refresh_process(pid) {
             if let Some(process) = self.system.process(pid) {
@@ -54,15 +50,4 @@ impl ProcessChecker {
 
         false
     }
-}
-
-pub fn asd() {
-    let mut system = System::new_with_specifics(RefreshKind::new().with_processes());
-    system.refresh_processes();
-    let theprocess = system.process_by_name("notepad");
-    println!("IS RUNNING: {}", theprocess.len());
-    std::thread::sleep(std::time::Duration::from_secs(5));
-    system.refresh_processes();
-    let theprocess = system.process_by_name("notepad");
-    println!("IS RUNNING: {}", theprocess.len());
 }
