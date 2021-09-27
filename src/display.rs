@@ -11,10 +11,11 @@ use std::{
     mem::size_of,
     ptr::{null, null_mut},
 };
-use widestring::{U16Str, U16String};
+
+type DisplayName = [u16; 32];
 
 pub struct Display {
-    name: U16String,
+    name: DisplayName,
     settings: DEVMODEW,
 }
 
@@ -35,7 +36,7 @@ impl Display {
     }
 
     pub fn name(&self) -> String {
-        self.name.to_string_lossy()
+        String::from_utf16_lossy(&self.name)
     }
 
     pub fn settings(&mut self) -> &mut DEVMODEW {
@@ -67,20 +68,20 @@ impl Display {
     }
 }
 
-fn get_display_name(device: u32) -> Option<U16String> {
+fn get_display_name(device: u32) -> Option<DisplayName> {
     let mut display = DISPLAY_DEVICEW {
         cb: size_of::<DISPLAY_DEVICEW>() as u32,
         ..Default::default()
     };
 
     if unsafe { EnumDisplayDevicesW(PWSTR(null_mut()), device, &mut display, 0).as_bool() } {
-        return Some(U16String::from_vec(display.DeviceName));
+        return Some(display.DeviceName);
     }
 
     None
 }
 
-fn get_display_settings(name: &U16Str, settings: &mut DEVMODEW) -> bool {
+fn get_display_settings(name: &DisplayName, settings: &mut DEVMODEW) -> bool {
     unsafe {
         EnumDisplaySettingsW(
             PWSTR(name.as_ptr() as *mut u16),

@@ -9,13 +9,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("Refresh Rate Control");
 
     let mut pc = process::ProcessChecker::new();
-    pc.checklist.push("notepad.exe".to_string());
+    pc.checklist.push(String::from("notepad.exe"));
     loop {
-        println!("RUNNING: {}",pc.check());
+        println!("RUNNING: {}", pc.check());
         std::thread::sleep(std::time::Duration::from_secs(1));
     }
-    
-    return Ok(());
 
     // Create
     let mut display = Display::create(0)?;

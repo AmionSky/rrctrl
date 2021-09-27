@@ -3,8 +3,11 @@ name = "rrctrl"
 version = "0.1.0"
 edition = "2018"
 
+[workspace]
+members = [
+    "bindings",
+]
+
 [dependencies]
 bindings = { path = "bindings" }
 windows = "0.21.0"
-widestring = "0.4.3"
-sysinfo = "0.20.3"
