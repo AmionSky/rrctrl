@@ -6,31 +6,29 @@ use bindings::Windows::Win32::{
 use std::mem::size_of;
 
 pub struct ProcessChecker {
-    pub checklist: Vec<String>,
     selected: Option<u32>,
 }
 
 impl ProcessChecker {
     pub fn new() -> Self {
         Self {
-            checklist: Vec::new(),
             selected: None,
         }
     }
 
-    pub fn check(&mut self) -> bool {
+    pub fn check(&mut self, checklist: &[String]) -> bool {
         if let Some(pid) = self.selected {
-            let result = self.check_pid(pid);
-            if !result {
+            if !self.check_pid(pid,checklist) && !self.check_all(checklist) {
                 self.selected = None;
+                return false;                    
             }
-            result
+            true
         } else {
-            self.check_all()
+            self.check_all(checklist)
         }
     }
 
-    fn check_pid(&mut self, pid: u32) -> bool {
+    fn check_pid(&mut self, pid: u32, checklist: &[String]) -> bool {
         unsafe {
             let mut buffer = [0u16; MAX_PATH as usize];
 
@@ -44,7 +42,7 @@ impl ProcessChecker {
 
             if length != 0 {
                 let name = String::from_utf16_lossy(&buffer[..length]);
-                if self.checklist.iter().any(|check| name.ends_with(check)) {
+                if checklist.iter().any(|check| name.ends_with(check)) {
                     self.selected = Some(pid);
                     return true;
                 }
@@ -54,7 +52,7 @@ impl ProcessChecker {
         false
     }
 
-    fn check_all(&mut self) -> bool {
+    fn check_all(&mut self, checklist: &[String]) -> bool {
         let mut processes = Vec::with_capacity(1000);
         let size = (processes.capacity() * size_of::<u32>()) as u32;
         let mut needed = 0;
@@ -64,6 +62,6 @@ impl ProcessChecker {
         }
         unsafe { processes.set_len(needed as usize / size_of::<u32>()) }
 
-        processes.iter().any(|pid| self.check_pid(*pid))
+        processes.iter().any(|pid| self.check_pid(*pid, checklist))
     }
 }

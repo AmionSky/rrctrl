@@ -3,7 +3,7 @@ use bindings::Windows::Win32::{
     Foundation::PWSTR,
     Graphics::Gdi::{
         ChangeDisplaySettingsW, EnumDisplayDevicesW, EnumDisplaySettingsW, CDS_TYPE,
-        DISPLAY_DEVICEW, DISP_CHANGE_SUCCESSFUL, ENUM_CURRENT_SETTINGS,
+        DISPLAY_DEVICEW, DISP_CHANGE_SUCCESSFUL, ENUM_CURRENT_SETTINGS, DM_DISPLAYFREQUENCY
     },
     UI::DisplayDevices::DEVMODEW,
 };
@@ -35,12 +35,13 @@ impl Display {
         }
     }
 
-    pub fn name(&self) -> String {
-        String::from_utf16_lossy(&self.name)
+    pub fn refresh(&self) -> u32 {
+        self.settings.dmDisplayFrequency
     }
 
-    pub fn settings(&mut self) -> &mut DEVMODEW {
-        &mut self.settings
+    pub fn set_refresh(&mut self, rate: u32) {
+        self.settings.dmDisplayFrequency = rate;
+        self.settings.dmFields = DM_DISPLAYFREQUENCY as u32;
     }
 
     pub fn load_settings(&mut self) -> Result<(), DisplayError> {
