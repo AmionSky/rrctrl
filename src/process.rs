@@ -1,9 +1,9 @@
-use bindings::Windows::Win32::{
+use std::mem::size_of;
+use windows::Win32::{
     Foundation::{CloseHandle, MAX_PATH, PWSTR},
     System::ProcessStatus::{K32EnumProcesses, K32GetProcessImageFileNameW},
     System::Threading::{OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION},
 };
-use std::mem::size_of;
 
 pub struct ProcessChecker {
     selected: Option<u32>,
@@ -11,16 +11,14 @@ pub struct ProcessChecker {
 
 impl ProcessChecker {
     pub fn new() -> Self {
-        Self {
-            selected: None,
-        }
+        Self { selected: None }
     }
 
     pub fn check(&mut self, checklist: &[String]) -> bool {
         if let Some(pid) = self.selected {
-            if !self.check_pid(pid,checklist) && !self.check_all(checklist) {
+            if !self.check_pid(pid, checklist) && !self.check_all(checklist) {
                 self.selected = None;
-                return false;                    
+                return false;
             }
             true
         } else {

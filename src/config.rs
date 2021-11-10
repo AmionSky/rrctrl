@@ -3,7 +3,7 @@ use std::{error::Error, io::Read, path::Path};
 use serde::Deserialize;
 use std::fs::File;
 
-#[derive(Deserialize,Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Config {
     pub base_refresh: u32,
     pub target_refresh: u32,
@@ -12,7 +12,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn load<P: AsRef<Path>>(path: P)->Result<Self,Box<dyn Error>> {
+    pub fn load<P: AsRef<Path>>(path: P) -> Result<Self, Box<dyn Error>> {
         let mut buffer = Vec::new();
         let mut file = File::open(path)?;
         file.read_to_end(&mut buffer)?;

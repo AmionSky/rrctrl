@@ -1,18 +1,18 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod config;
 mod display;
 mod error;
-mod process;
-mod config;
 mod hotreload;
+mod process;
 
-use process::ProcessChecker;
-use display::Display;
-use std::path::PathBuf;
-use std::error::Error;
-use crossbeam_utils::sync::ShardedLock;
-use std::sync::Arc;
 use config::Config;
+use crossbeam_utils::sync::ShardedLock;
+use display::Display;
+use process::ProcessChecker;
+use std::error::Error;
+use std::path::PathBuf;
+use std::sync::Arc;
 
 type RuntimeConfig = Arc<ShardedLock<Config>>;
 
@@ -29,18 +29,18 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut checker = ProcessChecker::new();
     let mut display = Display::create(0)?;
-    let mut state  = false;
+    let mut state = false;
 
     loop {
         if checker.check(&config.read().unwrap().apps) {
             if let Err(error) = display.load_settings() {
-                eprintln!("Failed to load display settings: {}",error);
+                eprintln!("Failed to load display settings: {}", error);
             } else {
                 let target = config.read().unwrap().target_refresh;
                 if display.refresh() != target {
                     display.set_refresh(target);
                     if let Err(error) = display.apply_settings() {
-                        eprintln!("Failed to change display settings: {}",error);
+                        eprintln!("Failed to change display settings: {}", error);
                     } else {
                         println!("Applied new refresh rate");
                         state = true;
@@ -49,7 +49,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
         } else if state {
             if let Err(error) = display.reset_settings() {
-                eprintln!("Failed to reset display: {}",error);
+                eprintln!("Failed to reset display: {}", error);
             } else {
                 println!("Reset old refresh rate");
             }

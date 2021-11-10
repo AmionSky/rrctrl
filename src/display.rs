@@ -1,15 +1,14 @@
 use crate::error::DisplayError;
-use bindings::Windows::Win32::{
-    Foundation::PWSTR,
-    Graphics::Gdi::{
-        ChangeDisplaySettingsW, EnumDisplayDevicesW, EnumDisplaySettingsW, CDS_TYPE,
-        DISPLAY_DEVICEW, DISP_CHANGE_SUCCESSFUL, ENUM_CURRENT_SETTINGS, DM_DISPLAYFREQUENCY
-    },
-    UI::DisplayDevices::DEVMODEW,
-};
 use std::{
     mem::size_of,
     ptr::{null, null_mut},
+};
+use windows::Win32::{
+    Foundation::PWSTR,
+    Graphics::Gdi::{
+        ChangeDisplaySettingsW, EnumDisplayDevicesW, EnumDisplaySettingsW, CDS_TYPE, DEVMODEW,
+        DISPLAY_DEVICEW, DISP_CHANGE_SUCCESSFUL, DM_DISPLAYFREQUENCY, ENUM_CURRENT_SETTINGS,
+    },
 };
 
 type DisplayName = [u16; 32];
