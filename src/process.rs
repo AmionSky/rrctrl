@@ -36,12 +36,11 @@ impl ProcessChecker {
 
             let process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
             if process.0 == 0 {
-                let error = match GetLastError() {
-                    ERROR_INVALID_PARAMETER => ProcessError::InvalidParameter,
-                    ERROR_ACCESS_DENIED => ProcessError::AccessDenied,
-                    e => ProcessError::UnknownError(e),
-                };
-                eprintln!("OpenProcess Error: {}", error);
+                match GetLastError() {
+                    ERROR_INVALID_PARAMETER => (), // ProcessError::InvalidParameter
+                    ERROR_ACCESS_DENIED => (), // ProcessError::AccessDenied
+                    e => eprintln!("OpenProcess Error: {}", ProcessError::UnknownError(e)),
+                }
                 return false;
             }
 
