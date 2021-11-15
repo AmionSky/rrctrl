@@ -1,6 +1,10 @@
+use crate::error::ProcessError;
 use std::mem::size_of;
 use windows::Win32::{
-    Foundation::{CloseHandle, MAX_PATH, PWSTR},
+    Foundation::{
+        CloseHandle, GetLastError, ERROR_ACCESS_DENIED, ERROR_INVALID_PARAMETER, HANDLE, MAX_PATH,
+        PWSTR,
+    },
     System::ProcessStatus::{K32EnumProcesses, K32GetProcessImageFileNameW},
     System::Threading::{OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION},
 };
@@ -31,12 +35,26 @@ impl ProcessChecker {
             let mut buffer = [0u16; MAX_PATH as usize];
 
             let process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+            if process.0 == 0 {
+                let error = match GetLastError() {
+                    ERROR_INVALID_PARAMETER => ProcessError::InvalidParameter,
+                    ERROR_ACCESS_DENIED => ProcessError::AccessDenied,
+                    e => ProcessError::UnknownError(e),
+                };
+                eprintln!("OpenProcess Error: {}", error);
+                return false;
+            }
+
             let length = K32GetProcessImageFileNameW(
                 process,
                 PWSTR(buffer.as_mut_ptr()),
                 buffer.len() as u32,
             ) as usize;
-            CloseHandle(process);
+            if length == 0 {
+                last_error("GetProcessImageFileName");
+            }
+
+            close_handle(process);
 
             if length != 0 {
                 let name = String::from_utf16_lossy(&buffer[..length]);
@@ -56,10 +74,23 @@ impl ProcessChecker {
         let mut needed = 0;
 
         if unsafe { !K32EnumProcesses(processes.as_mut_ptr(), size, &mut needed).as_bool() } {
+            last_error("EnumProcesses");
             return false;
         }
         unsafe { processes.set_len(needed as usize / size_of::<u32>()) }
 
         processes.iter().any(|pid| self.check_pid(*pid, checklist))
     }
+}
+
+unsafe fn close_handle(handle: HANDLE) {
+    if !CloseHandle(handle).as_bool() {
+        last_error("CloseHandle");
+    }
+}
+
+fn last_error(name: &'static str) {
+    let ecode = unsafe { GetLastError() };
+    let error = ProcessError::UnknownError(ecode);
+    eprintln!("{} Error: {}", name, error);
 }
