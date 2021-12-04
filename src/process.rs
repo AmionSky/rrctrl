@@ -38,7 +38,7 @@ impl ProcessChecker {
             if process.0 == 0 {
                 match GetLastError() {
                     ERROR_INVALID_PARAMETER => (), // ProcessError::InvalidParameter
-                    ERROR_ACCESS_DENIED => (), // ProcessError::AccessDenied
+                    ERROR_ACCESS_DENIED => (),     // ProcessError::AccessDenied
                     e => eprintln!("OpenProcess Error: {}", ProcessError::UnknownError(e)),
                 }
                 return false;

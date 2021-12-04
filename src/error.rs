@@ -23,6 +23,7 @@ impl std::fmt::Display for DisplayError {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub enum ProcessError {
     InvalidParameter,
