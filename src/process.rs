@@ -3,10 +3,13 @@ use std::mem::size_of;
 use windows::Win32::{
     Foundation::{
         CloseHandle, GetLastError, ERROR_ACCESS_DENIED, ERROR_INVALID_PARAMETER, HANDLE, MAX_PATH,
-        PWSTR,
+        PWSTR, STATUS_PENDING,
     },
-    System::ProcessStatus::{K32EnumProcesses, K32GetProcessImageFileNameW},
-    System::Threading::{OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION},
+    System::ProcessStatus::K32EnumProcesses,
+    System::Threading::{
+        GetExitCodeProcess, OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32,
+        PROCESS_QUERY_LIMITED_INFORMATION,
+    },
 };
 
 pub struct ProcessChecker {
@@ -18,22 +21,21 @@ impl ProcessChecker {
         Self { selected: None }
     }
 
-    pub fn check(&mut self, checklist: &[String]) -> bool {
+    pub fn check(&mut self, checklist: &[Vec<u16>]) -> bool {
         if let Some(pid) = self.selected {
             if !self.check_pid(pid, checklist) && !self.check_all(checklist) {
                 self.selected = None;
-                return false;
+                false
+            } else {
+                true
             }
-            true
         } else {
             self.check_all(checklist)
         }
     }
 
-    fn check_pid(&mut self, pid: u32, checklist: &[String]) -> bool {
+    fn check_pid(&mut self, pid: u32, checklist: &[Vec<u16>]) -> bool {
         unsafe {
-            let mut buffer = [0u16; MAX_PATH as usize];
-
             let process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
             if process.0 == 0 {
                 match GetLastError() {
@@ -44,30 +46,49 @@ impl ProcessChecker {
                 return false;
             }
 
-            let length = K32GetProcessImageFileNameW(
-                process,
-                PWSTR(buffer.as_mut_ptr()),
-                buffer.len() as u32,
-            ) as usize;
-            if length == 0 {
-                last_error("GetProcessImageFileName");
-            }
-
+            let result = self.check_process(pid, checklist, process);
             close_handle(process);
 
-            if length != 0 {
-                let name = String::from_utf16_lossy(&buffer[..length]);
-                if checklist.iter().any(|check| name.ends_with(check)) {
-                    self.selected = Some(pid);
-                    return true;
-                }
-            }
+            result
+        }
+    }
+
+    unsafe fn check_process(&mut self, pid: u32, checklist: &[Vec<u16>], process: HANDLE) -> bool {
+        let mut exitcode = 0u32;
+        if !GetExitCodeProcess(process, &mut exitcode).as_bool() {
+            last_error("GetExitCodeProcess");
+            return false;
+        }
+
+        if exitcode != STATUS_PENDING.0 {
+            println!("Process exit code is not STATUS_PENDING: {}", exitcode);
+            return false;
+        }
+
+        let mut buffer = [0u16; MAX_PATH as usize];
+        let mut length = buffer.len() as u32;
+        if !QueryFullProcessImageNameW(
+            process,
+            PROCESS_NAME_WIN32,
+            PWSTR(buffer.as_mut_ptr()),
+            &mut length,
+        )
+        .as_bool()
+        {
+            last_error("QueryFullProcessImageNameW");
+            return false;
+        }
+
+        let name = &buffer[..length as usize];
+        if length != 0 && checklist.iter().any(|check| name.ends_with(check)) {
+            self.selected = Some(pid);
+            return true;
         }
 
         false
     }
 
-    fn check_all(&mut self, checklist: &[String]) -> bool {
+    fn check_all(&mut self, checklist: &[Vec<u16>]) -> bool {
         let mut processes = Vec::with_capacity(1000);
         let size = (processes.capacity() * size_of::<u32>()) as u32;
         let mut needed = 0;
