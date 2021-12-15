@@ -28,7 +28,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let _watcher = hotreload::watch(&config_path, config.clone())?;
 
     let mut checker = ProcessChecker::new();
-    let mut display = Display::create(0)?;
+    let mut display = Display::create(config.read().unwrap().display_index)?;
     let mut state = false;
 
     loop {

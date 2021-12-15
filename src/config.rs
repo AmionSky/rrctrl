@@ -1,20 +1,13 @@
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
 use std::fs::File;
 use std::{error::Error, io::Read, path::Path};
 
 #[derive(Deserialize, Debug, Clone)]
-struct ConfigData {
-    pub base_refresh: u32,
-    pub target_refresh: u32,
-    pub check_interval: u64,
-    pub apps: Vec<String>,
-}
-
-#[derive(Debug, Clone)]
 pub struct Config {
-    pub base_refresh: u32,
+    pub display_index: u32,
     pub target_refresh: u32,
     pub check_interval: u64,
+    #[serde(deserialize_with = "string_to_native")]
     pub apps: Vec<Vec<u16>>,
 }
 
@@ -23,24 +16,26 @@ impl Config {
         let mut buffer = Vec::new();
         let mut file = File::open(path)?;
         file.read_to_end(&mut buffer)?;
+        Ok(toml::from_slice(&buffer)?)
+    }
+}
 
-        let data = toml::from_slice(&buffer)?;
-
-        Ok(Self::from_data(data))
+fn string_to_native<'de, D>(deserializer: D) -> Result<Vec<Vec<u16>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum RawData {
+        Data(Vec<String>),
     }
 
-    fn from_data(data: ConfigData) -> Self {
-        let mut apps = Vec::with_capacity(data.apps.len());
+    let RawData::Data(strvec) = RawData::deserialize(deserializer)?;
+    let mut uft16vec = Vec::with_capacity(strvec.len());
 
-        for app in data.apps {
-            apps.push(r"\".encode_utf16().chain(app.encode_utf16()).collect());
-        }
-
-        Self {
-            base_refresh: data.base_refresh,
-            target_refresh: data.target_refresh,
-            check_interval: data.check_interval,
-            apps,
-        }
+    for exe in strvec {
+        uft16vec.push(r"\".encode_utf16().chain(exe.encode_utf16()).collect());
     }
+
+    Ok(uft16vec)
 }
