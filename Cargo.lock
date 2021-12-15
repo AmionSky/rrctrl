@@ -194,7 +194,7 @@ dependencies = [
 
 [[package]]
 name = "rrctrl"
-version = "0.2.3"
+version = "0.3.0"
 dependencies = [
  "crossbeam-utils",
  "notify",
