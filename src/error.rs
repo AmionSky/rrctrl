@@ -38,7 +38,7 @@ impl std::fmt::Display for ProcessError {
         match self {
             ProcessError::InvalidParameter => write!(f, "Invalid parameter"),
             ProcessError::AccessDenied => write!(f, "Access denied"),
-            ProcessError::UnknownError(e) => write!(f, "Unknown error: E{}", e.0),
+            ProcessError::UnknownError(e) => write!(f, "Unknown error: E{}", e),
         }
     }
 }

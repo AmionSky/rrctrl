@@ -60,7 +60,7 @@ impl ProcessChecker {
             return false;
         }
 
-        if exitcode != STATUS_PENDING.0 {
+        if exitcode != STATUS_PENDING.0 as u32 {
             println!("Process exit code is not STATUS_PENDING: {}", exitcode);
             return false;
         }

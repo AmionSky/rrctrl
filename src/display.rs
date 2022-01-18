@@ -6,7 +6,7 @@ use std::{
 use windows::Win32::{
     Foundation::PWSTR,
     Graphics::Gdi::{
-        ChangeDisplaySettingsW, EnumDisplayDevicesW, EnumDisplaySettingsW, CDS_TYPE, DEVMODEW,
+        ChangeDisplaySettingsW, EnumDisplayDevicesW, EnumDisplaySettingsW, DEVMODEW,
         DISPLAY_DEVICEW, DISP_CHANGE_SUCCESSFUL, DM_DISPLAYFREQUENCY, ENUM_CURRENT_SETTINGS,
     },
 };
@@ -93,5 +93,5 @@ fn get_display_settings(name: &DisplayName, settings: &mut DEVMODEW) -> bool {
 }
 
 fn set_display_settings(settings: *const DEVMODEW) -> bool {
-    unsafe { ChangeDisplaySettingsW(settings, CDS_TYPE(0)) == DISP_CHANGE_SUCCESSFUL }
+    unsafe { ChangeDisplaySettingsW(settings, 0) == DISP_CHANGE_SUCCESSFUL }
 }
