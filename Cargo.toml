@@ -15,7 +15,7 @@ notify = "5.0.0-pre.13"
 crossbeam-utils = "0.8"
 
 [dependencies.windows]
-version = "0.30.0"
+version = "0.32.0"
 features = [
     "Win32_Foundation",
     "Win32_Graphics_Gdi",
