@@ -29,3 +29,4 @@ overflow-checks = false
 lto = "fat"
 panic = "abort"
 codegen-units = 1
+strip = true
