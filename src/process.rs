@@ -1,9 +1,10 @@
 use crate::error::ProcessError;
 use std::mem::size_of;
+use windows::core::PWSTR;
 use windows::Win32::{
     Foundation::{
         CloseHandle, GetLastError, ERROR_ACCESS_DENIED, ERROR_INVALID_PARAMETER, HANDLE, MAX_PATH,
-        PWSTR, STATUS_PENDING,
+        STATUS_PENDING,
     },
     System::ProcessStatus::K32EnumProcesses,
     System::Threading::{

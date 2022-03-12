@@ -3,12 +3,10 @@ use std::{
     mem::size_of,
     ptr::{null, null_mut},
 };
-use windows::Win32::{
-    Foundation::PWSTR,
-    Graphics::Gdi::{
-        ChangeDisplaySettingsW, EnumDisplayDevicesW, EnumDisplaySettingsW, CDS_TYPE, DEVMODEW,
-        DISPLAY_DEVICEW, DISP_CHANGE_SUCCESSFUL, DM_DISPLAYFREQUENCY, ENUM_CURRENT_SETTINGS,
-    },
+use windows::core::PCWSTR;
+use windows::Win32::Graphics::Gdi::{
+    ChangeDisplaySettingsW, EnumDisplayDevicesW, EnumDisplaySettingsW, CDS_TYPE, DEVMODEW,
+    DISPLAY_DEVICEW, DISP_CHANGE_SUCCESSFUL, DM_DISPLAYFREQUENCY, ENUM_CURRENT_SETTINGS,
 };
 
 type DisplayName = [u16; 32];
@@ -74,7 +72,7 @@ fn get_display_name(device: u32) -> Option<DisplayName> {
         ..Default::default()
     };
 
-    if unsafe { EnumDisplayDevicesW(PWSTR(null_mut()), device, &mut display, 0).as_bool() } {
+    if unsafe { EnumDisplayDevicesW(PCWSTR(null_mut()), device, &mut display, 0).as_bool() } {
         return Some(display.DeviceName);
     }
 
@@ -84,7 +82,7 @@ fn get_display_name(device: u32) -> Option<DisplayName> {
 fn get_display_settings(name: &DisplayName, settings: &mut DEVMODEW) -> bool {
     unsafe {
         EnumDisplaySettingsW(
-            PWSTR(name.as_ptr() as *mut u16),
+            PCWSTR(name.as_ptr() as *mut u16),
             ENUM_CURRENT_SETTINGS,
             settings,
         )
