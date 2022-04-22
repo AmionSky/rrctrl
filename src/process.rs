@@ -37,20 +37,18 @@ impl ProcessChecker {
 
     fn check_pid(&mut self, pid: u32, checklist: &[Vec<u16>]) -> bool {
         unsafe {
-            let process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
-            if process.0 == 0 {
+            if let Ok(process) = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid) {
+                let result = self.check_process(pid, checklist, process);
+                close_handle(process);
+                result
+            } else {
                 match GetLastError() {
                     ERROR_INVALID_PARAMETER => (), // ProcessError::InvalidParameter
                     ERROR_ACCESS_DENIED => (),     // ProcessError::AccessDenied
                     e => eprintln!("OpenProcess Error: {}", ProcessError::UnknownError(e)),
                 }
-                return false;
+                false
             }
-
-            let result = self.check_process(pid, checklist, process);
-            close_handle(process);
-
-            result
         }
     }
 
