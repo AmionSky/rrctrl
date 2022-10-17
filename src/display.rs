@@ -1,8 +1,5 @@
 use crate::error::DisplayError;
-use std::{
-    mem::size_of,
-    ptr::{null, null_mut},
-};
+use std::{mem::size_of, ptr::null_mut};
 use windows::core::PCWSTR;
 use windows::Win32::Graphics::Gdi::{
     ChangeDisplaySettingsW, EnumDisplayDevicesW, EnumDisplaySettingsW, CDS_TYPE, DEVMODEW,
@@ -38,7 +35,7 @@ impl Display {
 
     pub fn set_refresh(&mut self, rate: u32) {
         self.settings.dmDisplayFrequency = rate;
-        self.settings.dmFields = DM_DISPLAYFREQUENCY as u32;
+        self.settings.dmFields = DM_DISPLAYFREQUENCY;
     }
 
     pub fn load_settings(&mut self) -> Result<(), DisplayError> {
@@ -50,7 +47,7 @@ impl Display {
     }
 
     pub fn apply_settings(&self) -> Result<(), DisplayError> {
-        if set_display_settings(&self.settings) {
+        if set_display_settings(Some(&self.settings)) {
             Ok(())
         } else {
             Err(DisplayError::ChangeSettingsFailed)
@@ -58,7 +55,7 @@ impl Display {
     }
 
     pub fn reset_settings(&self) -> Result<(), DisplayError> {
-        if set_display_settings(null()) {
+        if set_display_settings(None) {
             Ok(())
         } else {
             Err(DisplayError::ChangeSettingsFailed)
@@ -90,6 +87,6 @@ fn get_display_settings(name: &DisplayName, settings: &mut DEVMODEW) -> bool {
     }
 }
 
-fn set_display_settings(settings: *const DEVMODEW) -> bool {
+fn set_display_settings(settings: Option<*const DEVMODEW>) -> bool {
     unsafe { ChangeDisplaySettingsW(settings, CDS_TYPE(0)) == DISP_CHANGE_SUCCESSFUL }
 }

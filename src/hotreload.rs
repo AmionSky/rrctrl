@@ -1,6 +1,6 @@
 use crate::config::Config;
 use crate::RuntimeConfig;
-use notify::{Config as NotifyConfig, RecommendedWatcher, RecursiveMode, Watcher};
+use notify::{Event, RecommendedWatcher, RecursiveMode, Watcher};
 use std::error::Error;
 use std::path::Path;
 
@@ -8,21 +8,19 @@ pub fn watch<P: AsRef<Path>>(
     path: P,
     config: RuntimeConfig,
 ) -> Result<RecommendedWatcher, Box<dyn Error>> {
-    let mut watcher = RecommendedWatcher::new(move |res| match res {
-        Ok(_) => {
-            if let Err(error) = reload_config(&config) {
-                eprintln!(
-                    "Failed to reload config (Maybe reload is too fast): {}",
-                    error
-                );
+    let mut watcher = notify::recommended_watcher(move |res: notify::Result<Event>| match res {
+        Ok(event) => {
+            if event.kind.is_modify() {
+                if let Err(error) = reload_config(&config) {
+                    eprintln!(
+                        "Failed to reload config (Maybe reload is too fast): {}",
+                        error
+                    );
+                }
             }
         }
         Err(e) => eprintln!("Watch error: {:?}", e),
     })?;
-
-    watcher.configure(NotifyConfig::NoticeEvents(false))?;
-    watcher.configure(NotifyConfig::OngoingEvents(None))?;
-    watcher.configure(NotifyConfig::PreciseEvents(false))?;
 
     watcher.watch(path.as_ref(), RecursiveMode::NonRecursive)?;
 
