@@ -1,6 +1,6 @@
 [package]
 name = "rrctrl"
-version = "0.3.3"
+version = "0.3.4"
 edition = "2021"
 description = "Automatically change monitor refresh rate when specific applications are running"
 repository = "https://github.com/AmionSky/rrctrl"
@@ -15,7 +15,9 @@ notify = "5.0.0"
 crossbeam-utils = "0.8"
 
 [dependencies.windows]
-version = "0.43.0"
+#version = "0.43.0"
+git = "https://github.com/microsoft/windows-rs"
+rev = "1bfd409a449656f2eb1362e9fa7ccdbe52e5e6d9"
 features = [
     "Win32_Foundation",
     "Win32_Graphics_Gdi",
