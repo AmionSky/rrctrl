@@ -20,7 +20,6 @@ impl Display {
                 name,
                 settings: DEVMODEW {
                     dmSize: size_of::<DEVMODEW>() as u16,
-                    dmDriverExtra: 0,
                     ..Default::default()
                 },
             })
@@ -34,7 +33,6 @@ impl Display {
     }
 
     pub fn set_refresh(&mut self, rate: u32) {
-        println!("RR: {}", self.settings.dmPelsWidth);
         self.settings.dmDisplayFrequency = rate;
         self.settings.dmFields = DM_DISPLAYFREQUENCY;
     }
@@ -96,32 +94,27 @@ fn set_display_settings(settings: Option<*const DEVMODEW>) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use std::mem::size_of_val;
-
-    use windows::w;
-
     use super::*;
 
     #[test]
-    fn display_settings_load() {
+    fn check_devmode_struct() {
         unsafe {
-            let mut dm = DEVMODEW::default();
-            dm.dmSize = size_of::<DEVMODEW>() as u16;
+            let mut dm = DEVMODEW {
+                dmSize: size_of::<DEVMODEW>() as u16,
+                ..Default::default()
+            };
 
-            let display = w!("\\\\.\\Display1");
+            let display = windows::w!("\\\\.\\Display1");
 
-            let res = EnumDisplaySettingsW(display, ENUM_CURRENT_SETTINGS, &mut dm);
+            assert!(EnumDisplaySettingsW(display, ENUM_CURRENT_SETTINGS, &mut dm).as_bool());
 
-            println!("RES: {}", res.0);
             println!(
                 "DATA: {}x{}@{}hz",
                 dm.dmPelsWidth, dm.dmPelsHeight, dm.dmDisplayFrequency
             );
-            panic!()
-        }
 
-        //let mut display = Display::create(0).unwrap();
-        //display.load_settings().unwrap();
-        //assert_ne!(display.refresh(), 0);
+            assert_eq!(dm.dmPelsWidth, 1920);
+            assert_eq!(dm.dmPelsHeight, 1080);
+        }
     }
 }
