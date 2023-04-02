@@ -6,7 +6,7 @@ use windows::Win32::{
         CloseHandle, GetLastError, ERROR_ACCESS_DENIED, ERROR_INVALID_PARAMETER, HANDLE, MAX_PATH,
         STATUS_PENDING,
     },
-    System::ProcessStatus::K32EnumProcesses,
+    System::ProcessStatus::EnumProcesses,
     System::Threading::{
         GetExitCodeProcess, OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32,
         PROCESS_QUERY_LIMITED_INFORMATION,
@@ -92,7 +92,7 @@ impl ProcessChecker {
         let size = (processes.capacity() * size_of::<u32>()) as u32;
         let mut needed = 0;
 
-        if unsafe { !K32EnumProcesses(processes.as_mut_ptr(), size, &mut needed).as_bool() } {
+        if unsafe { !EnumProcesses(processes.as_mut_ptr(), size, &mut needed).as_bool() } {
             last_error("EnumProcesses");
             return false;
         }
