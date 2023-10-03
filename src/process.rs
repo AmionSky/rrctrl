@@ -2,10 +2,7 @@ use crate::error::ProcessError;
 use std::mem::size_of;
 use windows::core::PWSTR;
 use windows::Win32::{
-    Foundation::{
-        CloseHandle, GetLastError, ERROR_ACCESS_DENIED, ERROR_INVALID_PARAMETER, HANDLE, MAX_PATH,
-        STATUS_PENDING,
-    },
+    Foundation::{CloseHandle, GetLastError, HANDLE, MAX_PATH, STATUS_PENDING},
     System::ProcessStatus::EnumProcesses,
     System::Threading::{
         GetExitCodeProcess, OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32,
@@ -42,11 +39,7 @@ impl ProcessChecker {
                 close_handle(process);
                 result
             } else {
-                match GetLastError() {
-                    ERROR_INVALID_PARAMETER => (), // ProcessError::InvalidParameter
-                    ERROR_ACCESS_DENIED => (),     // ProcessError::AccessDenied
-                    e => eprintln!("OpenProcess Error: {}", ProcessError::UnknownError(e)),
-                }
+                last_error("OpenProcess");
                 false
             }
         }
@@ -54,7 +47,7 @@ impl ProcessChecker {
 
     unsafe fn check_process(&mut self, pid: u32, checklist: &[Vec<u16>], process: HANDLE) -> bool {
         let mut exitcode = 0u32;
-        if !GetExitCodeProcess(process, &mut exitcode).as_bool() {
+        if GetExitCodeProcess(process, &mut exitcode).is_err() {
             last_error("GetExitCodeProcess");
             return false;
         }
@@ -66,13 +59,13 @@ impl ProcessChecker {
 
         let mut buffer = [0u16; MAX_PATH as usize];
         let mut length = buffer.len() as u32;
-        if !QueryFullProcessImageNameW(
+        if QueryFullProcessImageNameW(
             process,
             PROCESS_NAME_WIN32,
             PWSTR(buffer.as_mut_ptr()),
             &mut length,
         )
-        .as_bool()
+        .is_err()
         {
             last_error("QueryFullProcessImageNameW");
             return false;
@@ -92,7 +85,7 @@ impl ProcessChecker {
         let size = (processes.capacity() * size_of::<u32>()) as u32;
         let mut needed = 0;
 
-        if unsafe { !EnumProcesses(processes.as_mut_ptr(), size, &mut needed).as_bool() } {
+        if unsafe { EnumProcesses(processes.as_mut_ptr(), size, &mut needed).is_err() } {
             last_error("EnumProcesses");
             return false;
         }
@@ -103,13 +96,19 @@ impl ProcessChecker {
 }
 
 unsafe fn close_handle(handle: HANDLE) {
-    if !CloseHandle(handle).as_bool() {
+    if CloseHandle(handle).is_err() {
         last_error("CloseHandle");
     }
 }
 
 fn last_error(name: &'static str) {
-    let ecode = unsafe { GetLastError() };
-    let error = ProcessError::UnknownError(ecode);
+    let error = from_last_error();
     eprintln!("{} Error: {}", name, error);
+}
+
+fn from_last_error() -> ProcessError {
+    match unsafe { GetLastError() } {
+        Err(error) => ProcessError::Win32Error(error.code()),
+        Ok(_) => ProcessError::UnknownError,
+    }
 }

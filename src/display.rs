@@ -104,7 +104,7 @@ mod tests {
                 ..Default::default()
             };
 
-            let display = windows::w!("\\\\.\\Display1");
+            let display = windows::core::w!("\\\\.\\Display1");
 
             assert!(EnumDisplaySettingsW(display, ENUM_CURRENT_SETTINGS, &mut dm).as_bool());
 

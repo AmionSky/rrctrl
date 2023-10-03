@@ -1,4 +1,4 @@
-use windows::Win32::Foundation::WIN32_ERROR;
+use windows::core::HRESULT;
 
 #[derive(Debug, Clone)]
 pub enum DisplayError {
@@ -28,7 +28,8 @@ impl std::fmt::Display for DisplayError {
 pub enum ProcessError {
     InvalidParameter,
     AccessDenied,
-    UnknownError(WIN32_ERROR),
+    Win32Error(HRESULT),
+    UnknownError,
 }
 
 impl std::error::Error for ProcessError {}
@@ -38,7 +39,8 @@ impl std::fmt::Display for ProcessError {
         match self {
             ProcessError::InvalidParameter => write!(f, "Invalid parameter"),
             ProcessError::AccessDenied => write!(f, "Access denied"),
-            ProcessError::UnknownError(e) => write!(f, "Unknown error: E{}", e.0),
+            ProcessError::Win32Error(e) => write!(f, "E{}: {}", e.0, e.message()),
+            ProcessError::UnknownError => write!(f, "Unknown error"),
         }
     }
 }
