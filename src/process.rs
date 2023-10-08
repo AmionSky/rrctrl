@@ -1,8 +1,7 @@
-use crate::error::ProcessError;
 use std::mem::size_of;
 use windows::core::PWSTR;
 use windows::Win32::{
-    Foundation::{CloseHandle, GetLastError, HANDLE, MAX_PATH, STATUS_PENDING},
+    Foundation::{CloseHandle, HANDLE, MAX_PATH, STATUS_PENDING},
     System::ProcessStatus::EnumProcesses,
     System::Threading::{
         GetExitCodeProcess, OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32,
@@ -11,104 +10,112 @@ use windows::Win32::{
 };
 
 pub struct ProcessChecker {
-    selected: Option<u32>,
+    monitored: Option<u32>,
+    buffer: [u16; MAX_PATH as usize],
 }
 
 impl ProcessChecker {
     pub fn new() -> Self {
-        Self { selected: None }
+        Self {
+            monitored: None,
+            buffer: [0u16; MAX_PATH as usize],
+        }
     }
 
     pub fn check(&mut self, checklist: &[Vec<u16>]) -> bool {
-        if let Some(pid) = self.selected {
-            if !self.check_pid(pid, checklist) && !self.check_all(checklist) {
-                self.selected = None;
-                false
+        if let Some(pid) = self.monitored {
+            if self.check_pid(pid, checklist) {
+                return true;
             } else {
-                true
-            }
-        } else {
-            self.check_all(checklist)
-        }
-    }
-
-    fn check_pid(&mut self, pid: u32, checklist: &[Vec<u16>]) -> bool {
-        unsafe {
-            if let Ok(process) = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid) {
-                let result = self.check_process(pid, checklist, process);
-                close_handle(process);
-                result
-            } else {
-                last_error("OpenProcess");
-                false
+                self.monitored = None;
             }
         }
-    }
 
-    unsafe fn check_process(&mut self, pid: u32, checklist: &[Vec<u16>], process: HANDLE) -> bool {
-        let mut exitcode = 0u32;
-        if GetExitCodeProcess(process, &mut exitcode).is_err() {
-            last_error("GetExitCodeProcess");
-            return false;
-        }
-
-        if exitcode != STATUS_PENDING.0 as u32 {
-            println!("Process exit code is not STATUS_PENDING: {}", exitcode);
-            return false;
-        }
-
-        let mut buffer = [0u16; MAX_PATH as usize];
-        let mut length = buffer.len() as u32;
-        if QueryFullProcessImageNameW(
-            process,
-            PROCESS_NAME_WIN32,
-            PWSTR(buffer.as_mut_ptr()),
-            &mut length,
-        )
-        .is_err()
-        {
-            last_error("QueryFullProcessImageNameW");
-            return false;
-        }
-
-        let name = &buffer[..length as usize];
-        if length != 0 && checklist.iter().any(|check| name.ends_with(check)) {
-            self.selected = Some(pid);
-            return true;
-        }
-
-        false
+        self.check_all(checklist)
     }
 
     fn check_all(&mut self, checklist: &[Vec<u16>]) -> bool {
-        let mut processes = Vec::with_capacity(1000);
+        let mut processes = Vec::with_capacity(4000);
         let size = (processes.capacity() * size_of::<u32>()) as u32;
         let mut needed = 0;
 
-        if unsafe { EnumProcesses(processes.as_mut_ptr(), size, &mut needed).is_err() } {
-            last_error("EnumProcesses");
+        if let Err(error) = unsafe { EnumProcesses(processes.as_mut_ptr(), size, &mut needed) } {
+            eprint_win32("EnumProcesses", error);
             return false;
         }
-        unsafe { processes.set_len(needed as usize / size_of::<u32>()) }
 
+        unsafe { processes.set_len(needed as usize / size_of::<u32>()) }
         processes.iter().any(|pid| self.check_pid(*pid, checklist))
     }
-}
 
-unsafe fn close_handle(handle: HANDLE) {
-    if CloseHandle(handle).is_err() {
-        last_error("CloseHandle");
+    fn check_pid(&mut self, pid: u32, checklist: &[Vec<u16>]) -> bool {
+        match unsafe { OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid) } {
+            Ok(process) => {
+                let result = self.check_process(pid, checklist, process);
+                close_handle(process);
+                result // return
+            }
+            Err(error) => {
+                eprint_win32("OpenProcess", error);
+                false // return
+            }
+        }
+    }
+
+    fn check_process(&mut self, pid: u32, checklist: &[Vec<u16>], process: HANDLE) -> bool {
+        // Check if the process is still running
+        if !is_process_running(process) {
+            return false;
+        }
+
+        // Reset buffer
+        self.buffer.fill(0);
+        let mut length = self.buffer.len() as u32;
+
+        // Get the process name
+        if let Err(error) = unsafe {
+            QueryFullProcessImageNameW(
+                process,
+                PROCESS_NAME_WIN32,
+                PWSTR(self.buffer.as_mut_ptr()),
+                &mut length,
+            )
+        } {
+            eprint_win32("QueryFullProcessImageName", error);
+            return false;
+        }
+
+        // Check if the name matches with the checklist
+        let name = &self.buffer[..length as usize];
+        if !name.is_empty() && checklist.iter().any(|check| name.ends_with(check)) {
+            self.monitored = Some(pid);
+            return true;
+        }
+
+        false // If no match was found
     }
 }
 
-fn last_error(name: &'static str) {
-    let error = from_last_error();
-    eprintln!("{} Error: {}", name, error);
+fn eprint_win32(name: &'static str, error: windows::core::Error) {
+    eprintln!("{} error ({}): {}", name, error.code(), error.message())
 }
 
-fn from_last_error() -> ProcessError {
-    match unsafe { GetLastError() } {
-        Err(error) => ProcessError::Win32Error(error.code()),
-        Ok(_) => ProcessError::UnknownError,
+fn close_handle(handle: HANDLE) {
+    if let Err(error) = unsafe { CloseHandle(handle) } {
+        eprint_win32("CloseHandle", error);
     }
+}
+
+/// Checks if the process is still running
+fn is_process_running(process: HANDLE) -> bool {
+    let mut exitcode = 0u32;
+
+    // Get the exit code
+    if let Err(error) = unsafe { GetExitCodeProcess(process, &mut exitcode) } {
+        eprint_win32("GetExitCodeProcess", error);
+        return false;
+    }
+
+    // Is the process pending
+    exitcode != STATUS_PENDING.0 as u32
 }

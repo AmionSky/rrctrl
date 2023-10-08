@@ -1,15 +1,16 @@
-use windows::core::HRESULT;
+use std::error::Error;
+use std::fmt::Display;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum DisplayError {
     IncorrectDevice,
     EnumSettingsFailed,
     ChangeSettingsFailed,
 }
 
-impl std::error::Error for DisplayError {}
+impl Error for DisplayError {}
 
-impl std::fmt::Display for DisplayError {
+impl Display for DisplayError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             DisplayError::IncorrectDevice => {
@@ -23,24 +24,23 @@ impl std::fmt::Display for DisplayError {
     }
 }
 
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-pub enum ProcessError {
-    InvalidParameter,
-    AccessDenied,
-    Win32Error(HRESULT),
-    UnknownError,
+#[derive(Debug)]
+pub enum ConfigError {
+    DefaultPath(std::io::Error),
+    FileOpen(std::io::Error),
+    FileRead(std::io::Error),
+    Deserialize(toml::de::Error),
 }
 
-impl std::error::Error for ProcessError {}
+impl Error for ConfigError {}
 
-impl std::fmt::Display for ProcessError {
+impl Display for ConfigError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            ProcessError::InvalidParameter => write!(f, "Invalid parameter"),
-            ProcessError::AccessDenied => write!(f, "Access denied"),
-            ProcessError::Win32Error(e) => write!(f, "E{}: {}", e.0, e.message()),
-            ProcessError::UnknownError => write!(f, "Unknown error"),
+            ConfigError::DefaultPath(error) => write!(f, "Failed to get config path ({error})"),
+            ConfigError::FileOpen(error) => write!(f, "Failed to open config file ({error})"),
+            ConfigError::FileRead(error) => write!(f, "Failed to read config file ({error})"),
+            ConfigError::Deserialize(error) => write!(f, "Failed to deserialize config ({error})"),
         }
     }
 }

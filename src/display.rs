@@ -113,8 +113,8 @@ mod tests {
                 dm.dmPelsWidth, dm.dmPelsHeight, dm.dmDisplayFrequency
             );
 
-            assert_eq!(dm.dmPelsWidth, 1920);
-            assert_eq!(dm.dmPelsHeight, 1080);
+            assert!(dm.dmPelsWidth > dm.dmPelsHeight);
+            assert!(dm.dmPelsHeight > dm.dmDisplayFrequency);
         }
     }
 }

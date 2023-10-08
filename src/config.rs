@@ -1,6 +1,9 @@
 use serde::{Deserialize, Deserializer};
 use std::fs::File;
-use std::{error::Error, io::Read, path::Path};
+use std::path::PathBuf;
+use std::{io::Read, path::Path};
+
+use crate::error::ConfigError;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Config {
@@ -12,11 +15,11 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn load<P: AsRef<Path>>(path: P) -> Result<Self, Box<dyn Error>> {
+    pub fn load<P: AsRef<Path>>(path: P) -> Result<Self, ConfigError> {
         let mut buffer = String::new();
-        let mut file = File::open(path)?;
-        file.read_to_string(&mut buffer)?;
-        Ok(toml::from_str(&buffer)?)
+        let mut file = File::open(path).map_err(ConfigError::FileOpen)?;
+        file.read_to_string(&mut buffer).map_err(ConfigError::FileRead)?;
+        toml::from_str(&buffer).map_err(ConfigError::Deserialize)
     }
 }
 
@@ -38,4 +41,10 @@ where
     }
 
     Ok(uft16vec)
+}
+
+pub fn default_path() -> Result<PathBuf, ConfigError> {
+    let mut path = std::env::current_exe().map_err(ConfigError::DefaultPath)?;
+    path.set_file_name("config.toml");
+    Ok(path)
 }

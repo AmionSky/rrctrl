@@ -1,4 +1,5 @@
-use crate::config::Config;
+use crate::config::{self, Config};
+use crate::error::ConfigError;
 use crate::RuntimeConfig;
 use notify::{Event, RecommendedWatcher, RecursiveMode, Watcher};
 use std::error::Error;
@@ -27,10 +28,10 @@ pub fn watch<P: AsRef<Path>>(
     Ok(watcher)
 }
 
-fn reload_config(config: &RuntimeConfig) -> Result<(), Box<dyn Error>> {
+fn reload_config(config: &RuntimeConfig) -> Result<(), ConfigError> {
     println!("Reloading config");
 
-    let path = crate::config_path()?;
+    let path = config::default_path()?;
     let new_config = Config::load(path)?;
     *config.write().unwrap() = new_config;
 
