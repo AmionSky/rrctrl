@@ -18,7 +18,8 @@ impl Config {
     pub fn load<P: AsRef<Path>>(path: P) -> Result<Self, ConfigError> {
         let mut buffer = String::new();
         let mut file = File::open(path).map_err(ConfigError::FileOpen)?;
-        file.read_to_string(&mut buffer).map_err(ConfigError::FileRead)?;
+        file.read_to_string(&mut buffer)
+            .map_err(ConfigError::FileRead)?;
         toml::from_str(&buffer).map_err(ConfigError::Deserialize)
     }
 }

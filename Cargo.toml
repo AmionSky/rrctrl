@@ -1,6 +1,6 @@
 [package]
 name = "rrctrl"
-version = "0.4.0"
+version = "0.4.1"
 edition = "2021"
 description = "Automatically change monitor refresh rate when specific applications are running"
 repository = "https://github.com/AmionSky/rrctrl"

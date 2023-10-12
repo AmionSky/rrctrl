@@ -1,7 +1,9 @@
 use std::mem::size_of;
-use windows::core::PWSTR;
+use windows::core::{HRESULT, PWSTR};
 use windows::Win32::{
-    Foundation::{CloseHandle, HANDLE, MAX_PATH, STATUS_PENDING},
+    Foundation::{
+        CloseHandle, ERROR_ACCESS_DENIED, ERROR_INVALID_PARAMETER, HANDLE, MAX_PATH, STATUS_PENDING,
+    },
     System::ProcessStatus::EnumProcesses,
     System::Threading::{
         GetExitCodeProcess, OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32,
@@ -56,7 +58,14 @@ impl ProcessChecker {
                 result // return
             }
             Err(error) => {
-                eprint_win32("OpenProcess", error);
+                const EIP: HRESULT = ERROR_INVALID_PARAMETER.to_hresult();
+                const EAD: HRESULT = ERROR_ACCESS_DENIED.to_hresult();
+
+                match error.code() {
+                    EIP | EAD => (),
+                    _ => eprint_win32("OpenProcess", error),
+                }
+
                 false // return
             }
         }
@@ -117,5 +126,5 @@ fn is_process_running(process: HANDLE) -> bool {
     }
 
     // Is the process pending
-    exitcode != STATUS_PENDING.0 as u32
+    exitcode == STATUS_PENDING.0 as u32
 }
