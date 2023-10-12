@@ -62,7 +62,7 @@ impl ProcessChecker {
                 const EAD: HRESULT = ERROR_ACCESS_DENIED.to_hresult();
 
                 match error.code() {
-                    EIP | EAD => (),
+                    EIP | EAD => (), // Ignore these errors
                     _ => eprint_win32("OpenProcess", error),
                 }
 
