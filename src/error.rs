@@ -60,10 +60,6 @@ impl WinError {
             Self { code, message }
         }
     }
-
-    pub fn code(&self) -> WIN32_ERROR {
-        self.code
-    }
 }
 
 impl std::error::Error for WinError {}

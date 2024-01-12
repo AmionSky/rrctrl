@@ -1,7 +1,8 @@
 use crate::error::WinError;
 use std::mem::size_of;
 use windows_sys::Win32::Foundation::{
-    CloseHandle, ERROR_ACCESS_DENIED, ERROR_INVALID_PARAMETER, HANDLE, MAX_PATH, STATUS_PENDING,
+    CloseHandle, GetLastError, ERROR_ACCESS_DENIED, ERROR_INVALID_PARAMETER, HANDLE, MAX_PATH,
+    STATUS_PENDING,
 };
 use windows_sys::Win32::System::ProcessStatus::EnumProcesses;
 use windows_sys::Win32::System::Threading::{
@@ -51,10 +52,9 @@ impl ProcessChecker {
     fn check_pid(&mut self, pid: u32, checklist: &[Vec<u16>]) -> bool {
         match unsafe { OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid) } {
             0 => {
-                let error = WinError::last();
-                match error.code() {
+                match unsafe { GetLastError() } {
                     ERROR_INVALID_PARAMETER | ERROR_ACCESS_DENIED => (), // Ignore these errors
-                    _ => eprint_error("OpenProcess", error),
+                    _ => eprint_error("OpenProcess", WinError::last()),
                 }
                 false // return
             }
