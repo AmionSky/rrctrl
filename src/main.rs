@@ -40,7 +40,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     if let Err(error) = display.apply_settings() {
                         eprintln!("Failed to change display settings: {}", error);
                     } else {
-                        println!("Applied new refresh rate");
+                        println!("Applied new refresh rate: {target}");
                         active = true;
                     }
                 }
@@ -49,7 +49,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             if let Err(error) = display.reset_settings() {
                 eprintln!("Failed to reset display: {}", error);
             } else {
-                println!("Reset old refresh rate");
+                println!("Reset to the original refresh rate");
             }
             active = false;
         }

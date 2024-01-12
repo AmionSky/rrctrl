@@ -1,9 +1,8 @@
+use crate::error::ConfigError;
 use serde::{Deserialize, Deserializer};
 use std::fs::File;
 use std::path::PathBuf;
 use std::{io::Read, path::Path};
-
-use crate::error::ConfigError;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Config {
