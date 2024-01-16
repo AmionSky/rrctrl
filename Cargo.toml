@@ -1,8 +1,8 @@
 [package]
 name = "rrctrl"
-version = "0.4.3"
+version = "0.5.1"
 edition = "2021"
-description = "Automatically change monitor refresh rate when specific applications are running"
+description = "Refresh-Rate Control"
 repository = "https://github.com/AmionSky/rrctrl"
 readme = "README.md"
 license = "GPL-3.0-only"
@@ -10,8 +10,8 @@ publish = false
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
-toml = "0.8.0"
-notify = "6.0.0"
+tray-indicator = "0.2.4"
+hotreload = "0.1.0"
 
 [dependencies.windows-sys]
 version = "0.52.0"
@@ -22,6 +22,9 @@ features = [
     "Win32_System_ProcessStatus",
     "Win32_System_Threading",
 ]
+
+[build-dependencies]
+tauri-winres = "0.1.1"
 
 [profile.release]
 opt-level = 3

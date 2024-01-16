@@ -26,27 +26,6 @@ impl Display for DisplayError {
 }
 
 #[derive(Debug)]
-pub enum ConfigError {
-    DefaultPath(std::io::Error),
-    FileOpen(std::io::Error),
-    FileRead(std::io::Error),
-    Deserialize(toml::de::Error),
-}
-
-impl Error for ConfigError {}
-
-impl Display for ConfigError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self {
-            Self::DefaultPath(error) => write!(f, "Failed to get config path. {error}"),
-            Self::FileOpen(error) => write!(f, "Failed to open config file. {error}"),
-            Self::FileRead(error) => write!(f, "Failed to read config file. {error}"),
-            Self::Deserialize(error) => write!(f, "Failed to deserialize config. {error}"),
-        }
-    }
-}
-
-#[derive(Debug)]
 pub struct WinError {
     code: WIN32_ERROR,
     message: String,

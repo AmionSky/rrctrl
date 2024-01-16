@@ -3,27 +3,32 @@
 mod config;
 mod display;
 mod error;
-mod hotreload;
 mod process;
+mod tray;
 
 use config::Config;
 use display::Display;
+use hotreload::Hotreload;
 use process::ProcessChecker;
 use std::error::Error;
-use std::sync::{Arc, RwLock};
-
-type RuntimeConfig = Arc<RwLock<Config>>;
+use std::sync::RwLock;
 
 fn main() -> Result<(), Box<dyn Error>> {
     println!("Refresh Rate Control");
 
-    let config_path = config::default_path()?;
+    // Show tray icon
+    std::thread::spawn(|| match tray::show() {
+        Ok(_) => std::process::exit(0),
+        Err(error) => eprintln!("Tray icon error: {error}"),
+    });
+
+    let config_path = config::default_path();
     if !config_path.exists() {
         return Err("Configuration file (config.toml) does not exist!".into());
     }
 
-    let config = Arc::new(RwLock::new(Config::load(&config_path)?));
-    let _watcher = hotreload::watch(&config_path, config.clone())?;
+    let watcher = Hotreload::<RwLock<Config>, Config>::new(config_path)?;
+    let config = watcher.config();
 
     let mut checker = ProcessChecker::new();
     let mut display = Display::create(config.read().unwrap().display_index)?; // TODO make it hotreload aware
