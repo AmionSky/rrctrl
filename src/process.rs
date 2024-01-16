@@ -1,4 +1,5 @@
 use crate::error::WinError;
+use crate::wstring::WString;
 use std::mem::size_of;
 use windows_sys::Win32::Foundation::{
     CloseHandle, GetLastError, ERROR_ACCESS_DENIED, ERROR_INVALID_PARAMETER, HANDLE, MAX_PATH,
@@ -23,7 +24,7 @@ impl ProcessChecker {
         }
     }
 
-    pub fn check(&mut self, checklist: &[Vec<u16>]) -> bool {
+    pub fn check(&mut self, checklist: &[WString]) -> bool {
         if let Some(pid) = self.monitored {
             if self.check_pid(pid, checklist) {
                 return true;
@@ -35,7 +36,7 @@ impl ProcessChecker {
         self.check_all(checklist)
     }
 
-    fn check_all(&mut self, checklist: &[Vec<u16>]) -> bool {
+    fn check_all(&mut self, checklist: &[WString]) -> bool {
         let mut processes = Vec::with_capacity(4096);
         let size = (processes.capacity() * size_of::<u32>()) as u32;
         let mut needed = 0;
@@ -49,7 +50,7 @@ impl ProcessChecker {
         processes.iter().any(|pid| self.check_pid(*pid, checklist))
     }
 
-    fn check_pid(&mut self, pid: u32, checklist: &[Vec<u16>]) -> bool {
+    fn check_pid(&mut self, pid: u32, checklist: &[WString]) -> bool {
         match unsafe { OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid) } {
             0 => {
                 match unsafe { GetLastError() } {
@@ -66,7 +67,7 @@ impl ProcessChecker {
         }
     }
 
-    fn check_process(&mut self, pid: u32, checklist: &[Vec<u16>], process: HANDLE) -> bool {
+    fn check_process(&mut self, pid: u32, checklist: &[WString], process: HANDLE) -> bool {
         // Check if the process is still running
         if !is_process_running(process) {
             return false;
@@ -92,7 +93,7 @@ impl ProcessChecker {
 
         // Check if the name matches with the checklist
         let name = &self.buffer[..length as usize];
-        if !name.is_empty() && checklist.iter().any(|check| name.ends_with(check)) {
+        if !name.is_empty() && checklist.iter().any(|check| name.ends_with(check.value())) {
             self.monitored = Some(pid);
             return true;
         }

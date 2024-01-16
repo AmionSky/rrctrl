@@ -1,4 +1,5 @@
 use crate::error::DisplayError;
+use crate::wstring::WString;
 use std::mem::size_of;
 use std::ptr::null;
 use windows_sys::Win32::Graphics::Gdi::{
@@ -6,49 +7,103 @@ use windows_sys::Win32::Graphics::Gdi::{
     DISP_CHANGE_SUCCESSFUL, DM_DISPLAYFREQUENCY, ENUM_CURRENT_SETTINGS,
 };
 
-type DisplayName = [u16; 33];
-
 pub struct Display {
-    name: DisplayName,
+    name: WString,
+    target: u32,
+    active: bool,
     settings: DEVMODEW,
 }
 
 impl Display {
-    pub fn create(device: u32) -> Result<Self, DisplayError> {
-        match get_display_name(device) {
-            Some(name) => {
-                let mut settings: DEVMODEW = unsafe { std::mem::zeroed() };
-                settings.dmSize = size_of::<DEVMODEW>() as u16;
-                Ok(Self { name, settings })
-            }
-            None => Err(DisplayError::IncorrectDevice),
+    pub fn new() -> Self {
+        let mut settings: DEVMODEW = unsafe { std::mem::zeroed() };
+        settings.dmSize = size_of::<DEVMODEW>() as u16;
+
+        Self {
+            name: get_display_name(0),
+            target: 0,
+            active: false,
+            settings,
         }
     }
 
-    pub fn refresh(&self) -> u32 {
+    pub fn set_name<S: AsRef<str>>(&mut self, name: S) {
+        let new_name = WString::new(name);
+        if self.name != new_name {
+            if self.active {
+                self.deactivate();
+            }
+            self.name = new_name;
+        }
+    }
+
+    pub fn set_target(&mut self, value: u32) {
+        if self.target != value {
+            self.target = value;
+            if self.active {
+                self.activate();
+            }
+        }
+    }
+
+    pub fn active(&self) -> bool {
+        self.active
+    }
+
+    pub fn activate(&mut self) {
+        if let Err(error) = self.action_activate() {
+            eprintln!("Failed to activate: {}", error);
+        }
+    }
+
+    pub fn deactivate(&mut self) {
+        if let Err(error) = self.action_deactivate() {
+            eprintln!("Failed to deactivate: {}", error);
+        }
+    }
+
+    fn action_activate(&mut self) -> Result<(), DisplayError> {
+        self.load_settings()?;
+        if self.refresh() != self.target {
+            self.set_refresh(self.target);
+            self.apply_settings()?;
+            self.active = true;
+            println!("Applied new refresh rate: {}", self.target);
+        }
+        Ok(())
+    }
+
+    fn action_deactivate(&mut self) -> Result<(), DisplayError> {
+        self.reset_settings()?;
+        self.active = false;
+        println!("Reset to the original refresh rate");
+        Ok(())
+    }
+
+    fn refresh(&self) -> u32 {
         self.settings.dmDisplayFrequency
     }
 
-    pub fn set_refresh(&mut self, rate: u32) {
+    fn set_refresh(&mut self, rate: u32) {
         self.settings.dmDisplayFrequency = rate;
         self.settings.dmFields = DM_DISPLAYFREQUENCY;
     }
 
-    pub fn load_settings(&mut self) -> Result<(), DisplayError> {
-        match get_display_settings(&self.name, &mut self.settings) {
+    fn load_settings(&mut self) -> Result<(), DisplayError> {
+        match get_display_settings(self.name.as_ptr(), &mut self.settings) {
             true => Ok(()),
             false => Err(DisplayError::EnumSettingsFailed),
         }
     }
 
-    pub fn apply_settings(&self) -> Result<(), DisplayError> {
+    fn apply_settings(&self) -> Result<(), DisplayError> {
         match set_display_settings(Some(&self.settings)) {
             true => Ok(()),
             false => Err(DisplayError::ChangeSettingsFailed),
         }
     }
 
-    pub fn reset_settings(&self) -> Result<(), DisplayError> {
+    fn reset_settings(&self) -> Result<(), DisplayError> {
         match set_display_settings(None) {
             true => Ok(()),
             false => Err(DisplayError::ChangeSettingsFailed),
@@ -56,22 +111,18 @@ impl Display {
     }
 }
 
-fn get_display_name(device: u32) -> Option<DisplayName> {
+fn get_display_name(device: u32) -> WString {
     let mut display: DISPLAY_DEVICEW = unsafe { std::mem::zeroed() };
     display.cb = size_of::<DISPLAY_DEVICEW>() as u32;
 
     match unsafe { EnumDisplayDevicesW(null(), device, &mut display, 0) } {
-        0 => None,
-        _ => {
-            let mut name: DisplayName = [0; 33];
-            name[..32].copy_from_slice(&display.DeviceName);
-            Some(name)
-        }
+        0 => WString::new("GetDisplayNameError"),
+        _ => WString::from_uft16(&display.DeviceName),
     }
 }
 
-fn get_display_settings(name: &DisplayName, settings: &mut DEVMODEW) -> bool {
-    unsafe { EnumDisplaySettingsW(name.as_ptr(), ENUM_CURRENT_SETTINGS, settings) != 0 }
+fn get_display_settings(name: *const u16, settings: &mut DEVMODEW) -> bool {
+    unsafe { EnumDisplaySettingsW(name, ENUM_CURRENT_SETTINGS, settings) != 0 }
 }
 
 fn set_display_settings(settings: Option<*const DEVMODEW>) -> bool {

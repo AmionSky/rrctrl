@@ -8,7 +8,6 @@ use windows_sys::Win32::System::Diagnostics::Debug::{
 
 #[derive(Debug)]
 pub enum DisplayError {
-    IncorrectDevice,
     EnumSettingsFailed,
     ChangeSettingsFailed,
 }
@@ -18,7 +17,6 @@ impl Error for DisplayError {}
 impl Display for DisplayError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Self::IncorrectDevice => write!(f, "Failed to get display name for specified device"),
             Self::EnumSettingsFailed => write!(f, "Failed to get the display settings"),
             Self::ChangeSettingsFailed => write!(f, "Failed to change the display settings"),
         }
