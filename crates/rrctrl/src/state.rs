@@ -1,8 +1,7 @@
-use hotreload::HotreloadApply;
-
-use crate::config::Config;
 use crate::display::Display;
 use crate::wstring::WString;
+use hotreload::HotreloadApply;
+use rrctrl_config::Config;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Mutex, MutexGuard};
 
@@ -61,8 +60,8 @@ impl State {
 
 impl HotreloadApply<Config> for State {
     fn apply(&self, data: Config) {
-        self.set_apps(data.apps);
-        self.set_check_interval(data.check_interval);
         self.update_display(data.display_name, data.target_refresh);
+        self.set_check_interval(data.check_interval);
+        self.set_apps(data.apps);
     }
 }
