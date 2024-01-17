@@ -1,6 +1,6 @@
 [package]
 name = "rrctrl"
-version = "0.6.0"
+version = "0.6.1"
 edition = "2021"
 description = "Refresh Rate Control"
 repository.workspace = true
@@ -9,7 +9,7 @@ publish = false
 
 [dependencies]
 rrctrl-config.workspace = true
-tray-indicator = "0.2.4"
+tray-indicator = { version = "0.3.0", features = ["dpiaware"] }
 hotreload = "0.1.0"
 
 [dependencies.windows-sys]
