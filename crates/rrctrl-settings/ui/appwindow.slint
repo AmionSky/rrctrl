@@ -1,0 +1,143 @@
+import { StyleMetrics, Button, VerticalBox , GroupBox, Switch, GridBox, ComboBox, HorizontalBox, CheckBox, SpinBox, Slider, ListView, ScrollView , LineEdit, StandardButton} from "std-widgets.slint";
+
+export component AppWindow inherits Window {
+    in-out property<int> interval: 12;
+    
+    icon: @image-url("../../../assets/application.png");
+    preferred-width: 400px;
+    preferred-height: 500px;
+
+    VerticalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-bottom: 16px;
+        alignment: stretch;
+
+        GroupBox {
+            title: "Display";
+            vertical-stretch: 0;
+
+            VerticalLayout {
+                spacing: 8px;
+
+                HorizontalLayout {
+                    spacing: 4px;
+                    Text {
+                        text: "Monitor";
+                        vertical-alignment: center;
+                    }
+                    ComboBox {
+                        model: ["My Cool Display", "Second Display"];
+                        current-value: "My Cool Display";
+                    }
+                }
+                HorizontalLayout {
+                    spacing: 4px;
+                    Text {
+                        text: "Refresh rate";
+                        vertical-alignment: center;
+                    }
+                    ComboBox {
+                        model: ["60", "120", "144"];
+                        current-value: "144";
+                    }
+                }
+                HorizontalLayout {
+                    spacing: 4px;
+                    Text {
+                        text: "Check rate (seconds): ";
+                        vertical-alignment: center;
+                    }
+                    check-rate := Slider {
+                        value: root.interval;
+                        minimum: 4;
+                        maximum: 40;
+                        changed(v) => {
+                            root.interval = v;
+                        }
+                    }
+                    SpinBox {
+                        width: 40px;
+                        value: root.interval;
+                    }
+                }
+            }
+        }
+        GroupBox {
+            title: "Applications";
+            vertical-stretch: 1;
+            VerticalLayout {
+                spacing: 8px;
+                Rectangle {
+                    background: StyleMetrics.dark-color-scheme
+                        ? StyleMetrics.window-background.darker(0.1)
+                        : StyleMetrics.window-background.brighter(0.1);
+                    ScrollView {
+                        VerticalLayout {
+                            for data in [
+                                { text: "Blue", color: #0000ff, bg: #eeeeee},
+                                { text: "Red", color: #ff0000, bg: #eeeeee},
+                                { text: "Green", color: #00ff00, bg: #eeeeee},
+                                { text: "Yellow", color: #ffff00, bg: #222222 },
+                                { text: "Black", color: #000000, bg: #eeeeee },
+                                { text: "White", color: #ffffff, bg: #222222 },
+                                { text: "Magenta", color: #ff00ff, bg: #eeeeee },
+                                { text: "Cyan", color: #00ffff, bg: #222222 },
+                            ] : TouchArea {
+                                Rectangle {
+                                    states [
+                                        hovered when parent.has-hover : {
+                                            background: StyleMetrics.dark-color-scheme
+                                                ? StyleMetrics.window-background.brighter(0.1)
+                                                : StyleMetrics.window-background.darker(0.1);
+                                        }
+                                    ]
+                                    HorizontalLayout {
+                                        padding-top: 2px;
+                                        padding-bottom: 2px;
+                                        padding-left: 8px;
+                                        padding-right: 2px;
+
+                                        Text {
+                                            horizontal-stretch: 1;
+                                            vertical-alignment: center;
+                                            text: data.text;
+                                        }
+                                        Button {
+                                            horizontal-stretch: 0;
+                                            icon: @image-url("../../../assets/close-icon.svg");
+                                        }
+                                    }
+                                }
+                            } 
+                        }
+                    }
+                }
+                HorizontalLayout {
+                    spacing: 4px;
+                    LineEdit {}
+                    Button {
+                        text: "Add";
+                    }
+                }
+            }
+        }
+        HorizontalLayout {
+            vertical-stretch: 0;
+            padding-top: 16px;
+            spacing: 8px;
+            alignment: end;
+            
+            Button {
+                enabled: false;
+                preferred-width: 80px;
+                text: "Reset";
+            }
+            Button {
+                preferred-width: 80px;
+                text: "Apply";
+                primary: true;
+            }
+        }
+    }
+}
