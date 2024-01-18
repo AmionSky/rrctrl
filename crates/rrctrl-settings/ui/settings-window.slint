@@ -1,0 +1,82 @@
+import { GroupBox, Button } from "std-widgets.slint";
+import { DisplaySettings } from "display.slint";
+import { ApplicationsSettings } from "applications.slint";
+import { Backend } from "backend.slint";
+
+export { Backend }
+
+export struct CurrentConfig {
+    monitor: string,
+    target-refresh: int,
+    applications: [string],
+}
+
+export component SettingsWindow inherits Window {
+    in property <CurrentConfig> config;
+
+    out property <string> monitor: config.monitor;
+    out property <string> target-refresh: config.target-refresh;
+
+    property <bool> modified: false;
+
+    callback apply;
+    
+    title: "Refresh Rate Control - Settings";
+    icon: @image-url("../../../assets/application.png");
+    preferred-width: 400px;
+    preferred-height: 500px;
+
+    VerticalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-bottom: 16px;
+        alignment: stretch;
+
+        GroupBox {
+            title: "Display";
+            vertical-stretch: 0;
+            settings-display := DisplaySettings {
+                modified <=> root.modified;
+                monitor <=> root.monitor;
+                target-refresh <=> root.target-refresh;
+            }
+        }
+
+        GroupBox {
+            title: "Applications";
+            vertical-stretch: 1;
+            applications-settings := ApplicationsSettings {
+                modified <=> root.modified;
+            }
+        }
+
+        HorizontalLayout {
+            vertical-stretch: 0;
+            padding-top: 16px;
+            spacing: 8px;
+            alignment: end;
+            
+            Button {
+                preferred-width: 80px;
+                text: "Reset";
+                enabled: root.modified;
+                clicked => {
+                    root.monitor = root.config.monitor;
+                    root.target-refresh = root.config.target-refresh;
+                    root.modified = false;
+                }
+            }
+
+            apply-button := Button {
+                preferred-width: 80px;
+                text: "Apply";
+                primary: true;
+                enabled: root.modified;
+                clicked => {
+                    apply();
+                    root.modified = false;
+                }
+            }
+        }
+    }
+}

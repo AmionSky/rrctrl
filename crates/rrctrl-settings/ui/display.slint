@@ -1,0 +1,36 @@
+import { ComboBox , Slider, SpinBox} from "std-widgets.slint";
+import { Backend } from "backend.slint";
+
+export component DisplaySettings inherits VerticalLayout {
+    in-out property <bool> modified: false;
+    in-out property <string> monitor;
+    in-out property <string> target-refresh;
+
+    spacing: 8px;
+
+    HorizontalLayout {
+        spacing: 4px;
+        Text {
+            text: "Monitor";
+            vertical-alignment: center;
+        }
+        ComboBox {
+            model: Backend.monitors();
+            current-value <=> root.monitor;
+            selected(v) => { modified = true; }
+        }
+    }
+    
+    HorizontalLayout {
+        spacing: 4px;
+        Text {
+            text: "Refresh rate";
+            vertical-alignment: center;
+        }
+        ComboBox {
+            model: Backend.refresh-rates(root.monitor);
+            current-value <=> root.target-refresh;
+            selected(v) => { modified = true; }
+        }
+    }
+}

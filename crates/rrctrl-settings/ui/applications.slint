@@ -1,0 +1,66 @@
+import { StyleMetrics, Button, ScrollView, LineEdit } from "std-widgets.slint";
+
+export component ApplicationsSettings inherits VerticalLayout {
+    in-out property<bool> modified: false;
+
+    spacing: 8px;
+
+    Rectangle {
+        background: StyleMetrics.dark-color-scheme
+            ? StyleMetrics.window-background.darker(0.2)
+            : StyleMetrics.window-background.brighter(0.2);
+
+        ScrollView {
+            VerticalLayout {
+                for data in [
+                    { text: "Blue", color: #0000ff, bg: #eeeeee},
+                    { text: "Red", color: #ff0000, bg: #eeeeee},
+                    { text: "Green", color: #00ff00, bg: #eeeeee},
+                    { text: "Yellow", color: #ffff00, bg: #222222 },
+                    { text: "Black", color: #000000, bg: #eeeeee },
+                    { text: "White", color: #ffffff, bg: #222222 },
+                    { text: "Magenta", color: #ff00ff, bg: #eeeeee },
+                    { text: "Cyan", color: #00ffff, bg: #222222 },
+                ] : TouchArea {
+                    Rectangle {
+                        states [
+                            hovered when parent.has-hover : {
+                                background: StyleMetrics.dark-color-scheme
+                                    ? StyleMetrics.window-background.brighter(0.2)
+                                    : StyleMetrics.window-background.darker(0.2);
+                            }
+                        ]
+                        HorizontalLayout {
+                            padding-top: 2px;
+                            padding-bottom: 2px;
+                            padding-left: 8px;
+                            padding-right: 2px;
+
+                            Text {
+                                horizontal-stretch: 1;
+                                vertical-alignment: center;
+                                text: data.text;
+                            }
+                            Button {
+                                horizontal-stretch: 0;
+                                icon: StyleMetrics.dark-color-scheme
+                                 ? @image-url("../../../assets/close-light.svg")
+                                 : @image-url("../../../assets/close-dark.svg");
+                            }
+                        }
+                    }
+                } 
+            }
+        }
+    }
+    HorizontalLayout {
+        spacing: 4px;
+        LineEdit {}
+        Button {
+            text: "Add";
+            clicked => {
+                root.modified = true;
+            }
+        }
+    }
+}
