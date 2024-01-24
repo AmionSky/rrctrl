@@ -7,7 +7,7 @@ export { Backend }
 
 export struct CurrentConfig {
     monitor: string,
-    target-refresh: int,
+    refresh: string,
     applications: [string],
 }
 
@@ -15,7 +15,7 @@ export component SettingsWindow inherits Window {
     in property <CurrentConfig> config;
 
     out property <string> monitor: config.monitor;
-    out property <string> target-refresh: config.target-refresh;
+    out property <string> refresh: config.refresh;
 
     property <bool> modified: false;
 
@@ -35,17 +35,17 @@ export component SettingsWindow inherits Window {
         GroupBox {
             title: "Display";
             vertical-stretch: 0;
-            settings-display := DisplaySettings {
+            DisplaySettings {
                 modified <=> root.modified;
                 monitor <=> root.monitor;
-                target-refresh <=> root.target-refresh;
+                refresh <=> root.refresh;
             }
         }
 
         GroupBox {
             title: "Applications";
             vertical-stretch: 1;
-            applications-settings := ApplicationsSettings {
+            ApplicationsSettings {
                 modified <=> root.modified;
             }
         }
@@ -62,12 +62,12 @@ export component SettingsWindow inherits Window {
                 enabled: root.modified;
                 clicked => {
                     root.monitor = root.config.monitor;
-                    root.target-refresh = root.config.target-refresh;
+                    root.refresh = root.config.refresh;
                     root.modified = false;
                 }
             }
 
-            apply-button := Button {
+            Button {
                 preferred-width: 80px;
                 text: "Apply";
                 primary: true;
