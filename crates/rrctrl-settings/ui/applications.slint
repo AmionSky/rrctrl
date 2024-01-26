@@ -2,6 +2,7 @@ import { StyleMetrics, Button, ScrollView, LineEdit } from "std-widgets.slint";
 
 export component ApplicationsSettings inherits VerticalLayout {
     in-out property<bool> modified: false;
+    in-out property<[string]> apps;
 
     spacing: 8px;
 
@@ -12,16 +13,7 @@ export component ApplicationsSettings inherits VerticalLayout {
 
         ScrollView {
             VerticalLayout {
-                for data in [
-                    { text: "Blue", color: #0000ff, bg: #eeeeee},
-                    { text: "Red", color: #ff0000, bg: #eeeeee},
-                    { text: "Green", color: #00ff00, bg: #eeeeee},
-                    { text: "Yellow", color: #ffff00, bg: #222222 },
-                    { text: "Black", color: #000000, bg: #eeeeee },
-                    { text: "White", color: #ffffff, bg: #222222 },
-                    { text: "Magenta", color: #ff00ff, bg: #eeeeee },
-                    { text: "Cyan", color: #00ffff, bg: #222222 },
-                ] : TouchArea {
+                for data in apps : TouchArea {
                     Rectangle {
                         states [
                             hovered when parent.has-hover : {
@@ -39,13 +31,16 @@ export component ApplicationsSettings inherits VerticalLayout {
                             Text {
                                 horizontal-stretch: 1;
                                 vertical-alignment: center;
-                                text: data.text;
+                                text: data;
                             }
                             Button {
                                 horizontal-stretch: 0;
                                 icon: StyleMetrics.dark-color-scheme
                                  ? @image-url("../../../assets/close-light.svg")
                                  : @image-url("../../../assets/close-dark.svg");
+                                clicked => {
+                                    
+                                }
                             }
                         }
                     }

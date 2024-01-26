@@ -5,7 +5,7 @@ slint::include_modules!();
 
 use crate::display::Display;
 use rrctrl_config::Config;
-use slint::{ModelRc, SharedString, VecModel};
+use slint::{Model, ModelRc, SharedString, VecModel};
 use std::collections::HashMap;
 
 struct UiDisplay {
@@ -54,11 +54,11 @@ fn window(
             .map(|d| d.monitor.clone())
             .collect::<Vec<_>>(),
     ));
-
     let refresh_rates = displays
         .iter()
         .map(|d| (d.monitor.clone(), d.refresh.clone()))
         .collect::<HashMap<_, _>>();
+    let check_interval = current.interval as u64;
 
     let ui = SettingsWindow::new()?;
 
@@ -93,11 +93,17 @@ fn window(
             return;
         };
 
+        let apps = ui
+            .get_apps()
+            .iter()
+            .map(|s| String::from(s.as_str()))
+            .collect();
+
         let cfg = Config {
             display_name,
             target_refresh,
-            check_interval: 12,
-            apps: vec![],
+            check_interval,
+            apps,
         };
 
         println!("Applying: {:#?}", cfg);

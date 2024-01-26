@@ -8,6 +8,7 @@ export { Backend }
 export struct CurrentConfig {
     monitor: string,
     refresh: string,
+    interval: int,
     applications: [string],
 }
 
@@ -16,6 +17,7 @@ export component SettingsWindow inherits Window {
 
     out property <string> monitor: config.monitor;
     out property <string> refresh: config.refresh;
+    out property <[string]> apps: config.applications;
 
     property <bool> modified: false;
 
@@ -47,6 +49,7 @@ export component SettingsWindow inherits Window {
             vertical-stretch: 1;
             ApplicationsSettings {
                 modified <=> root.modified;
+                apps <=> root.apps;
             }
         }
 

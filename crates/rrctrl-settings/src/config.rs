@@ -22,6 +22,7 @@ pub fn current(displays: &[Display]) -> CurrentConfig {
 
             CurrentConfig {
                 applications: ModelRc::new(VecModel::from(apps)),
+                interval: config.check_interval as i32,
                 monitor: SharedString::from(monitor),
                 refresh: SharedString::from(crate::format_refresh(config.target_refresh)),
             }
@@ -38,6 +39,7 @@ pub fn current(displays: &[Display]) -> CurrentConfig {
 
             CurrentConfig {
                 applications: ModelRc::new(VecModel::from(vec![])),
+                interval: 12,
                 monitor: SharedString::from(monitor),
                 refresh: SharedString::from(refresh),
             }
