@@ -12,7 +12,6 @@ use hotreload::Hotreload;
 use process::ProcessChecker;
 use rrctrl_config::Config;
 use std::error::Error;
-use std::path::PathBuf;
 use std::time::Duration;
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -24,7 +23,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         Err(error) => eprintln!("Tray icon error: {error}"),
     });
 
-    let config_path = config_path();
+    let config_path = Config::path();
     if !config_path.exists() {
         return Err("Configuration file (config.toml) does not exist!".into());
     }
@@ -45,10 +44,4 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         std::thread::sleep(Duration::from_secs(state.check_interval()));
     }
-}
-
-pub fn config_path() -> PathBuf {
-    let mut path = std::env::current_exe().expect("Failed to get current executable path");
-    path.set_file_name("config.toml");
-    path
 }

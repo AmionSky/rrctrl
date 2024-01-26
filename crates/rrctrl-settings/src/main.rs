@@ -1,16 +1,17 @@
+mod config;
 mod display;
 
 slint::include_modules!();
 
 use crate::display::Display;
+use rrctrl_config::Config;
 use slint::{ModelRc, SharedString, VecModel};
 use std::collections::HashMap;
-use std::rc::Rc;
 
 struct UiDisplay {
     pub device: String,
-    pub monitor: String,
-    pub refresh: Vec<String>,
+    pub monitor: SharedString,
+    pub refresh: ModelRc<SharedString>,
 }
 
 impl UiDisplay {
@@ -20,8 +21,13 @@ impl UiDisplay {
             .enumerate()
             .map(|(i, d)| Self {
                 device: d.device,
-                monitor: format!("{}. {}", i + 1, d.monitor),
-                refresh: d.refresh.into_iter().map(|r| format!("{r} Hz")).collect(),
+                monitor: SharedString::from(format_monitor(&d.monitor, i)),
+                refresh: ModelRc::new(VecModel::from(
+                    d.refresh
+                        .into_iter()
+                        .map(|r| SharedString::from(format_refresh(r)))
+                        .collect::<Vec<_>>(),
+                )),
             })
             .collect()
     }
@@ -30,82 +36,84 @@ impl UiDisplay {
 fn main() {
     println!("Hello, world!");
 
-    let displays = UiDisplay::from(Display::query().expect("Failed to query display infos"));
+    let displays = Display::query().expect("Failed to query display infos");
+    let current = config::current(&displays);
 
-    for display in &displays {
-        println!("Device: {} | Monitor: {}", display.device, display.monitor);
-    }
-
-    if let Err(error) = window(&displays) {
+    if let Err(error) = window(current, UiDisplay::from(displays)) {
         eprintln!("Window error: {error}");
     }
 }
 
-fn window(displays: &[UiDisplay]) -> Result<(), Box<dyn std::error::Error>> {
-    let monitors = Rc::new(VecModel::from(
+fn window(
+    current: CurrentConfig,
+    displays: Vec<UiDisplay>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let monitors = ModelRc::new(VecModel::from(
         displays
             .iter()
-            .map(|d| SharedString::from(&d.monitor))
-            .collect::<Vec<SharedString>>(),
+            .map(|d| d.monitor.clone())
+            .collect::<Vec<_>>(),
     ));
 
     let refresh_rates = displays
         .iter()
-        .map(|d| {
-            (
-                d.monitor.clone(),
-                Rc::new(VecModel::from(
-                    d.refresh
-                        .iter()
-                        .map(SharedString::from)
-                        .collect::<Vec<SharedString>>(),
-                )),
-            )
-        })
-        .collect::<HashMap<String, Rc<VecModel<SharedString>>>>();
+        .map(|d| (d.monitor.clone(), d.refresh.clone()))
+        .collect::<HashMap<_, _>>();
 
     let ui = SettingsWindow::new()?;
 
-    let config = CurrentConfig {
-        applications: ModelRc::from(Rc::new(VecModel::from(vec![]))),
-        monitor: SharedString::from(&displays[0].monitor),
-        refresh: SharedString::from(&displays[0].refresh[0]),
-    };
+    ui.set_config(current);
 
-    ui.set_config(config);
-
+    ui.global::<Backend>().on_monitors(move || monitors.clone());
     ui.global::<Backend>()
-        .on_monitors(move || ModelRc::from(monitors.clone()));
-
-    ui.global::<Backend>().on_refresh_rates(move |monitor| {
-        if let Some(rates) = refresh_rates.get(monitor.as_str()) {
-            ModelRc::from(rates.clone())
-        } else {
-            ModelRc::default()
-        }
-    });
+        .on_refresh_rates(move |monitor| match refresh_rates.get(&monitor) {
+            Some(rates) => rates.clone(),
+            None => ModelRc::default(),
+        });
 
     let ui_handle = ui.as_weak();
     ui.on_apply(move || {
         let ui = ui_handle.unwrap();
-        println!("Apply : {:?}", ui.get_config());
-    });
 
-    // let ui_handle = ui.as_weak();
-    // ui.on_request_increase_value(move || {
-    //     let ui = ui_handle.unwrap();
-    //     ui.set_counter(ui.get_counter() + 1);
-    // });
+        let Some(display_name) = displays
+            .iter()
+            .find(|d| d.monitor == ui.get_monitor())
+            .map(|d| d.device.clone())
+        else {
+            eprintln!("Apply failed: Not a valid display");
+            return;
+        };
+
+        let Some(Ok(target_refresh)) = ui
+            .get_refresh()
+            .split_once(' ')
+            .map(|(hz, _)| hz.parse::<u32>())
+        else {
+            eprintln!("Apply failed: Not a valid refresh rate");
+            return;
+        };
+
+        let cfg = Config {
+            display_name,
+            target_refresh,
+            check_interval: 12,
+            apps: vec![],
+        };
+
+        println!("Applying: {:#?}", cfg);
+        if let Err(error) = config::save(&cfg) {
+            eprintln!("Failed to save config: {error}");
+        }
+    });
 
     ui.run()?;
     Ok(())
 }
-/*
-fn monitors(displays: &[UiDisplay]) -> Rc<> {
 
+fn format_monitor(monitor: &str, index: usize) -> String {
+    format!("{}. {}", index + 1, monitor)
 }
 
-fn refresh_rates(displays: &[UiDisplay]) {
-
+fn format_refresh(refresh: u32) -> String {
+    format!("{} Hz", refresh)
 }
-*/
