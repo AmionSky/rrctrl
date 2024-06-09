@@ -1,6 +1,10 @@
 [workspace]
 resolver = "2"
-members = ["crates/*"]
+members = [
+    "crates/rrctrl",
+    "crates/rrctrl-config",
+#   "crates/rrctrl-settings",
+]
 default-members = ["crates/rrctrl"]
 
 [workspace.package]
