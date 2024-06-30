@@ -1,6 +1,6 @@
 use crate::display::Display;
 use crate::wstring::WString;
-use hotreload::HotreloadApply;
+use hotreload::{Apply, ApplyResult};
 use rrctrl_config::Config;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Mutex, MutexGuard};
@@ -23,7 +23,7 @@ impl Default for State {
 
 impl State {
     pub fn display(&self) -> MutexGuard<'_, Display> {
-        self.display.lock().expect("State.display mutex paniced.")
+        self.display.lock().expect("State.display() failed to aquire lock.")
     }
 
     pub fn update_display(&self, name: String, target: u32) {
@@ -41,7 +41,7 @@ impl State {
     }
 
     pub fn apps(&self) -> MutexGuard<'_, Vec<WString>> {
-        self.apps.lock().expect("State.apps mutex paniced.")
+        self.apps.lock().expect("State.apps() failed to aquire lock.")
     }
 
     pub fn set_apps(&self, value: Vec<String>) {
@@ -58,10 +58,11 @@ impl State {
     }
 }
 
-impl HotreloadApply<Config> for State {
-    fn apply(&self, data: Config) {
+impl Apply<Config> for State {
+    fn apply(&self, data: Config) -> ApplyResult {
         self.update_display(data.display_name, data.target_refresh);
         self.set_check_interval(data.check_interval);
         self.set_apps(data.apps);
+        Ok(())
     }
 }
