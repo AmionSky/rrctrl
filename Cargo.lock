@@ -205,9 +205,9 @@ dependencies = [
 
 [[package]]
 name = "hotreload"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8d72dd66d7335888b1827c3728809bcc129d6517cfe29dd7421dc2242aff7abf"
+checksum = "39569d3965d2295b8a1d2d9918ecfb5ac8602509349b715fb357a16d2afea765"
 dependencies = [
  "notify",
  "serde",
