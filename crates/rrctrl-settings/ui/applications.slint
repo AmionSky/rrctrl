@@ -1,4 +1,4 @@
-import { StyleMetrics, Button, ScrollView, LineEdit } from "std-widgets.slint";
+import { Button, ScrollView, LineEdit, Palette } from "std-widgets.slint";
 
 export component ApplicationsSettings inherits VerticalLayout {
     in-out property<bool> modified: false;
@@ -7,9 +7,9 @@ export component ApplicationsSettings inherits VerticalLayout {
     spacing: 8px;
 
     Rectangle {
-        background: StyleMetrics.dark-color-scheme
-            ? StyleMetrics.window-background.darker(0.2)
-            : StyleMetrics.window-background.brighter(0.2);
+        background: Palette.color-scheme == ColorScheme.dark
+            ? Palette.background.darker(0.2)
+            : Palette.background.brighter(0.2);
 
         ScrollView {
             VerticalLayout {
@@ -17,9 +17,9 @@ export component ApplicationsSettings inherits VerticalLayout {
                     Rectangle {
                         states [
                             hovered when parent.has-hover : {
-                                background: StyleMetrics.dark-color-scheme
-                                    ? StyleMetrics.window-background.brighter(0.2)
-                                    : StyleMetrics.window-background.darker(0.2);
+                                background: Palette.color-scheme == ColorScheme.dark
+                                    ? Palette.background.brighter(0.2)
+                                    : Palette.background.darker(0.2);
                             }
                         ]
                         HorizontalLayout {
@@ -35,7 +35,7 @@ export component ApplicationsSettings inherits VerticalLayout {
                             }
                             Button {
                                 horizontal-stretch: 0;
-                                icon: StyleMetrics.dark-color-scheme
+                                icon: Palette.color-scheme == ColorScheme.dark
                                  ? @image-url("../../../assets/close-light.svg")
                                  : @image-url("../../../assets/close-dark.svg");
                                 clicked => {
