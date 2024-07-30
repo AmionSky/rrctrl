@@ -51,20 +51,19 @@ impl ProcessChecker {
     }
 
     fn check_pid(&mut self, pid: u32, checklist: &[WString]) -> bool {
-        match unsafe { OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid) } {
-            0 => {
-                match unsafe { GetLastError() } {
-                    ERROR_INVALID_PARAMETER | ERROR_ACCESS_DENIED => (), // Ignore these errors
-                    _ => eprint_error("OpenProcess", WinError::last()),
-                }
-                false // return
+        let process = unsafe { OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid) };
+
+        if process.is_null() {
+            match unsafe { GetLastError() } {
+                ERROR_INVALID_PARAMETER | ERROR_ACCESS_DENIED => (), // Ignore these errors
+                _ => eprint_error("OpenProcess", WinError::last()),
             }
-            process => {
-                let result = self.check_process(pid, checklist, process);
-                close_handle(process);
-                result // return
-            }
+            return false;
         }
+
+        let result = self.check_process(pid, checklist, process);
+        close_handle(process);
+        result // return
     }
 
     fn check_process(&mut self, pid: u32, checklist: &[WString], process: HANDLE) -> bool {
