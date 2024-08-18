@@ -12,7 +12,7 @@ rrctrl-config.workspace = true
 toml = "0.8.8"
 
 [dependencies.windows-sys]
-version = "0.52.0"
+version = "0.59.0"
 features = [
     "Win32_Foundation",
     "Win32_Graphics_Gdi",
