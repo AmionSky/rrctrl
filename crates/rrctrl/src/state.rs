@@ -23,7 +23,9 @@ impl Default for State {
 
 impl State {
     pub fn display(&self) -> MutexGuard<'_, Display> {
-        self.display.lock().expect("State.display() failed to aquire lock.")
+        self.display
+            .lock()
+            .expect("State.display() failed to aquire lock.")
     }
 
     pub fn update_display(&self, name: String, target: u32) {
@@ -41,7 +43,9 @@ impl State {
     }
 
     pub fn apps(&self) -> MutexGuard<'_, Vec<WString>> {
-        self.apps.lock().expect("State.apps() failed to aquire lock.")
+        self.apps
+            .lock()
+            .expect("State.apps() failed to aquire lock.")
     }
 
     pub fn set_apps(&self, value: Vec<String>) {

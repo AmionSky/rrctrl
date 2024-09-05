@@ -3,7 +3,7 @@ resolver = "2"
 members = [
     "crates/rrctrl",
     "crates/rrctrl-config",
-    "crates/rrctrl-settings",
+    # "crates/rrctrl-settings",
 ]
 default-members = ["crates/rrctrl"]
 
