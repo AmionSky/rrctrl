@@ -1,33 +1,23 @@
+use winscribe::icon::Icon;
+use winscribe::manifest::{DpiMode, Feature, Manifest};
+use winscribe::{ResBuilder, ResError};
+
+const ICON: &str = "./assets/application.ico";
+
 fn main() {
-    if std::env::var("CARGO_CFG_TARGET_OS").unwrap() == "windows" {
-        const ICON: &str = "./assets/application.ico";
+    println!("cargo:rerun-if-changed={ICON}");
 
-        let mut res = tauri_winres::WindowsResource::new();
-        res.set_icon(ICON);
-        res.set_manifest(r#"
-            <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-            <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
-            <asmv3:application xmlns:asmv3="urn:schemas-microsoft-com:asm.v3">
-                <asmv3:windowsSettings xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">
-                    <dpiAware>true</dpiAware>
-                </asmv3:windowsSettings>
-            </asmv3:application>
-            <dependency>
-                <dependentAssembly>
-                    <assemblyIdentity
-                        type="win32"
-                        name="Microsoft.Windows.Common-Controls"
-                        version="6.0.0.0"
-                        processorArchitecture="*"
-                        publicKeyToken="6595b64144ccf1df"
-                        language="*"
-                    />
-                </dependentAssembly>
-            </dependency>
-            </assembly>
-        "#);
-        res.compile().unwrap();
-
-        println!("cargo:rerun-if-changed={ICON}");
+    if std::env::var("CARGO_CFG_WINDOWS").is_ok() {
+        resource().expect("Failed to include resource!");
     }
+}
+
+fn resource() -> Result<(), ResError> {
+    ResBuilder::from_env()?
+        .push(Icon::app(ICON))
+        .push(Manifest::from([
+            Feature::DpiAware(DpiMode::PerMonitorV2),
+            Feature::ControlsV6,
+        ]))
+        .compile()
 }

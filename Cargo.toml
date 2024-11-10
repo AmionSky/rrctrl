@@ -1,6 +1,6 @@
 [package]
 name = "rrctrl"
-version = "0.7.0"
+version = "0.7.1"
 edition = "2021"
 description = "Refresh Rate Control"
 repository = "https://github.com/AmionSky/rrctrl"
@@ -23,7 +23,7 @@ features = [
 ]
 
 [build-dependencies]
-tauri-winres = "0.1.1"
+winscribe = "0.1.0"
 
 [profile.release]
 opt-level = 3
@@ -31,6 +31,3 @@ strip = true
 lto = true
 codegen-units = 1
 panic = "abort"
-
-[patch.crates-io]
-embed-resource = { path = "../rust-embed-resource" }
