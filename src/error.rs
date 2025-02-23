@@ -3,7 +3,7 @@ use std::fmt::Display;
 use std::ptr::null;
 use windows_sys::Win32::Foundation::{GetLastError, WIN32_ERROR};
 use windows_sys::Win32::System::Diagnostics::Debug::{
-    FormatMessageW, FORMAT_MESSAGE_FROM_SYSTEM, FORMAT_MESSAGE_IGNORE_INSERTS,
+    FORMAT_MESSAGE_FROM_SYSTEM, FORMAT_MESSAGE_IGNORE_INSERTS, FormatMessageW,
 };
 
 #[derive(Debug)]
@@ -47,16 +47,18 @@ impl std::fmt::Display for WinError {
     }
 }
 
-unsafe fn get_error_message(code: WIN32_ERROR) -> String {
+fn get_error_message(code: WIN32_ERROR) -> String {
     let mut buffer = [0u16; 4096];
-    let length = FormatMessageW(
-        FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-        null(),
-        code,
-        0,
-        buffer.as_mut_ptr(),
-        buffer.len() as u32,
-        null(),
-    );
+    let length = unsafe {
+        FormatMessageW(
+            FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+            null(),
+            code,
+            0,
+            buffer.as_mut_ptr(),
+            buffer.len() as u32,
+            null(),
+        )
+    };
     String::from_utf16_lossy(&buffer[..length as usize])
 }

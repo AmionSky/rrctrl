@@ -2,13 +2,13 @@ use crate::error::WinError;
 use crate::wstring::WString;
 use std::mem::size_of;
 use windows_sys::Win32::Foundation::{
-    CloseHandle, GetLastError, ERROR_ACCESS_DENIED, ERROR_INVALID_PARAMETER, HANDLE, MAX_PATH,
+    CloseHandle, ERROR_ACCESS_DENIED, ERROR_INVALID_PARAMETER, GetLastError, HANDLE, MAX_PATH,
     STATUS_PENDING,
 };
 use windows_sys::Win32::System::ProcessStatus::EnumProcesses;
 use windows_sys::Win32::System::Threading::{
-    GetExitCodeProcess, OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32,
-    PROCESS_QUERY_LIMITED_INFORMATION,
+    GetExitCodeProcess, OpenProcess, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION,
+    QueryFullProcessImageNameW,
 };
 
 pub struct ProcessChecker {

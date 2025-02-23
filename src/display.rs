@@ -3,8 +3,8 @@ use crate::wstring::WString;
 use std::mem::size_of;
 use std::ptr::null;
 use windows_sys::Win32::Graphics::Gdi::{
-    ChangeDisplaySettingsW, EnumDisplayDevicesW, EnumDisplaySettingsW, DEVMODEW, DISPLAY_DEVICEW,
-    DISP_CHANGE_SUCCESSFUL, DM_DISPLAYFREQUENCY, ENUM_CURRENT_SETTINGS,
+    ChangeDisplaySettingsW, DEVMODEW, DISP_CHANGE_SUCCESSFUL, DISPLAY_DEVICEW, DM_DISPLAYFREQUENCY,
+    ENUM_CURRENT_SETTINGS, EnumDisplayDevicesW, EnumDisplaySettingsW,
 };
 
 pub struct Display {
