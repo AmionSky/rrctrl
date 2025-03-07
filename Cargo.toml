@@ -1,6 +1,6 @@
 [package]
 name = "rrctrl"
-version = "0.7.2"
+version = "0.7.3"
 edition = "2024"
 description = "Refresh Rate Control"
 repository = "https://github.com/AmionSky/rrctrl"
@@ -10,7 +10,7 @@ publish = false
 [dependencies]
 rrctrl-config.path = "./config"
 tray-indicator = { version = "0.4.0", features = ["dpiaware"] }
-hotreload = "0.2.0"
+hotreload = "0.3.0"
 
 [dependencies.windows-sys]
 version = "0.59.0"

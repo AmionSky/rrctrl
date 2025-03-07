@@ -1,6 +1,6 @@
 use crate::display::Display;
 use crate::wstring::WString;
-use hotreload::{Apply, ApplyResult};
+use hotreload::Reload;
 use rrctrl_config::Config;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Mutex, MutexGuard};
@@ -62,8 +62,10 @@ impl State {
     }
 }
 
-impl Apply<Config> for State {
-    fn apply(&self, data: Config) -> ApplyResult {
+impl Reload for State {
+    type Data = Config;
+
+    fn apply(&self, data: Config) -> Result<(), Box<dyn std::error::Error>> {
         self.update_display(data.display_name, data.target_refresh);
         self.set_check_interval(data.check_interval);
         self.set_apps(data.apps);

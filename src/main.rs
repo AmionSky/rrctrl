@@ -28,7 +28,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         return Err("Configuration file (config.toml) does not exist!".into());
     }
 
-    let watcher = Hotreload::<State, Config>::new(config_path)?;
+    let watcher = Hotreload::<State>::new(config_path)?;
     let state = watcher.config();
     let mut checker = ProcessChecker::new();
 
