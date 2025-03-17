@@ -11,8 +11,11 @@ use windows_sys::Win32::System::Threading::{
     QueryFullProcessImageNameW,
 };
 
+const PROCESSES_LEN: usize = 1024;
+
 pub struct ProcessChecker {
     monitored: Option<u32>,
+    processes: [u32; PROCESSES_LEN],
     buffer: [u16; MAX_PATH as usize],
 }
 
@@ -20,6 +23,7 @@ impl ProcessChecker {
     pub fn new() -> Self {
         Self {
             monitored: None,
+            processes: [0; PROCESSES_LEN],
             buffer: [0u16; MAX_PATH as usize],
         }
     }
@@ -37,17 +41,23 @@ impl ProcessChecker {
     }
 
     fn check_all(&mut self, checklist: &[WString]) -> bool {
-        let mut processes = Vec::with_capacity(4096);
-        let size = (processes.capacity() * size_of::<u32>()) as u32;
+        const SIZE: u32 = (PROCESSES_LEN * size_of::<u32>()) as u32;
         let mut needed = 0;
 
-        if unsafe { EnumProcesses(processes.as_mut_ptr(), size, &mut needed) } == 0 {
+        if unsafe { EnumProcesses(self.processes.as_mut_ptr(), SIZE, &mut needed) } == 0 {
             eprint_error("EnumProcesses", WinError::last());
             return false;
         }
 
-        unsafe { processes.set_len(needed as usize / size_of::<u32>()) }
-        processes.iter().any(|pid| self.check_pid(*pid, checklist))
+        let len = needed as usize / size_of::<u32>();
+
+        for i in 0..len {
+            if self.check_pid(self.processes[i], checklist) {
+                return true;
+            }
+        }
+
+        false // No matching process
     }
 
     fn check_pid(&mut self, pid: u32, checklist: &[WString]) -> bool {
@@ -72,8 +82,6 @@ impl ProcessChecker {
             return false;
         }
 
-        // Reset buffer
-        self.buffer.fill(0);
         let mut length = self.buffer.len() as u32;
 
         // Get the process name
