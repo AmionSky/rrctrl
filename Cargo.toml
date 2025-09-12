@@ -1,6 +1,6 @@
 [package]
 name = "rrctrl"
-version = "0.8.1"
+version = "0.8.2"
 edition = "2024"
 description = "Refresh Rate Control"
 repository = "https://github.com/AmionSky/rrctrl"
@@ -13,7 +13,7 @@ tray-indicator = { version = "0.4.0", features = ["dpiaware"] }
 hotreload = "0.3.0"
 
 [dependencies.windows-sys]
-version = "0.60.0"
+version = "0.61.0"
 features = [
     "Win32_Graphics_Gdi",
     "Win32_System_ProcessStatus",
